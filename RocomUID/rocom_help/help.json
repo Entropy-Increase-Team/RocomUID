@@ -25,6 +25,14 @@
         "need_ck": false,
         "need_sk": false,
         "need_admin": false
+      },
+	  {
+        "name": "查找精灵",
+        "desc": "条件查找精灵",
+        "eg": "查找精灵 技能,折射,黑手",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
       }
     ]
   }
