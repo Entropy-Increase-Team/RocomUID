@@ -246,7 +246,7 @@ async def draw_rocom_info(rocomname):
         danzu_str = ' '.join(rocom_group_list[rocomname])
         img_draw.text(
             (91, 600),
-            f"蛋组：{danzu_str}(蛋组信息不一定准确，一切以游戏实机为准)",
+            f"蛋组：{danzu_str}",
             black_color,
             rc_font_28,
             'lm',

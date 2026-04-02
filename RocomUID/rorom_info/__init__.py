@@ -32,7 +32,7 @@ async def get_rocom_egg_info(bot: Bot, ev: Event):
     if peizhong_flag == 0:
         await bot.send(f'{name1}与{name2}无法进行配种哦[父母精灵请输入最终进化型进行查询]', at_sender=True)
     else:
-        await bot.send(f'{name1}与{name2}可以进行配种哦~\n配种信息不一定准确，一切以游戏实机为准', at_sender=True)
+        await bot.send(f'{name1}与{name2}可以进行配种哦~', at_sender=True)
         
 @sv_rc_rocom_info.on_command('技能信息')
 async def get_rocom_skill_info(bot: Bot, ev: Event):
