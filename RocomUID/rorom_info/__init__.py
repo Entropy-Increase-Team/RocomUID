@@ -2,6 +2,7 @@ from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from ..utils.map.rocom_map import rocom_group_list, rocom_list, rocom_skill_list, characteristic_list, skill_list
+from .draw_info_image import draw_rocom_info
 
 sv_rc_rocom_info = SV('rc基础信息查询', pm=1)
 
@@ -46,3 +47,15 @@ async def get_rocom_skill_info(bot: Bot, ev: Event):
     weili = '--' if skill_info[2] == '0' else skill_info[2]
     mes = f"技能名称：{skill_name}\n技能属性：{skill_info[0]}\n技能消耗：{skill_info[1]}cost\n技能威力：{weili}\n技能介绍：{skill_info[3]}"
     await bot.send(mes, at_sender=True)
+    
+@sv_rc_rocom_info.on_command('图鉴')
+async def get_rocom_info_img(bot: Bot, ev: Event):
+    args = ev.text.split()
+    if len(args) < 1:
+        return await bot.send('请输入需要查询的精灵名称', at_sender=True)
+    rocom_name = args[0]
+    if rocom_name not in rocom_list.keys():
+        return await bot.send('精灵名称不存在，请输入正确的精灵名称', at_sender=True)
+    
+    im = await draw_rocom_info(rocom_name)
+    await bot.send(im, at_sender=True)

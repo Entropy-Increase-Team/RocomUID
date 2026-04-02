@@ -1,8 +1,18 @@
 from pathlib import Path
 from PIL import Image
+import textwrap
 
 TEXT_PATH = Path(__file__).parent / "texture2d"
 ICON = TEXT_PATH / "ICON.png"
+
+async def get_text_line(content, num):
+    content_line = []
+    text_list = content.split('\n')
+    for text in text_list:
+        para = textwrap.wrap(text, width=num)
+        for line in para:
+            content_line.append(line)
+    return content_line
 
 def get_footer():
     return Image.open(TEXT_PATH / "footer.png")
