@@ -12,7 +12,7 @@ class APIClient:
     """API请求客户端 - 封装所有HTTP接口调用"""
 
     # 接口URL常量
-    ANNOUNCEMENT_LIST_URL = "https://morefun.game.qq.com/rocom/E80EH8LJ/homeIndex"
+    ANNOUNCEMENT_LIST_URL = "https://morefun.game.qq.com/rocom/E80EH8LJ/petsetList"
     ANNOUNCEMENT_LIST_URL_LEGACY = "https://morefun.game.qq.com/act/v1/api/v1/gateway"
     ANNOUNCEMENT_DETAIL_URL = "https://morefun.game.qq.com/rocom/E80EH8LJ/threadDetail"
     REDEEM_URL = "https://comm.ams.game.qq.com/ide/"
@@ -164,6 +164,19 @@ class APIClient:
             }
         }
         
+        # data = {
+            # "data": {
+                # "account_type": "qq",
+                # "openid": "54150F6DC02E03F40E21E9AC4B495CAB",
+                # "area_id": 2,
+                # "plat_id": 1,
+                # "biz_code": "rocom",
+                # "server_type": 1,
+                # "app_name": "102802421",
+                # "req_path": "/api/user/gameInfo",
+                # "req_type": "GET",
+            # }
+        # }
         try:
             response = requests.post(
                 f"{self.ANNOUNCEMENT_LIST_URL}?X-Mcube-Act-Id=E80EH8LJ",
