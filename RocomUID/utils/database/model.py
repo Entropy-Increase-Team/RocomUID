@@ -15,6 +15,8 @@ class RocomUser(User, table=True):
     bot_id: str = Field(default="", title="机器人ID")
     uid: str = Field(default="", title="洛克王国账号ID")
     cookie: str = Field(default="", title="Cookie")
+    token: str = Field(default="", title="token")
+    openid: str = Field(default="", title="openid")
     
     @classmethod
     async def insert_rocom_uid(
@@ -61,11 +63,12 @@ class RocomUser(User, table=True):
         user_id: str,
         bot_id: str,
         token: str,
+        openid: str,
     ) -> Union[str, int]:
         res = await cls.update_data(
             user_id=user_id,
             bot_id=bot_id,
-            **{"cookie": token},
+            **{"token": token, "openid": openid},
         )
         return res
     
@@ -85,5 +88,7 @@ class RocomUser(User, table=True):
         user_id: str,
         bot_id: str,
     ) -> Union[str, int]:
-        token = await cls.get_user_cookie_by_user_id(user_id, bot_id)
-        return token
+        result = await cls.select_data(user_id, bot_id)
+        token = result.token if result and result.token else None
+        openid = result.openid if result and result.openid else None
+        return token, openid
