@@ -44,7 +44,7 @@ class RocomApi():
     async def get_game_info(
         self,
         token: str,
-        openid: str,
+        openid: str = '',
         area_id: int = 2,
         plat_id: int = 1,
         biz_code: str = "rocom",
