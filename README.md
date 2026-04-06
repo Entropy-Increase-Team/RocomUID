@@ -28,8 +28,8 @@
 
 ## 丨功能
 
-<details><summary>rc图鉴 - 命令: rc图鉴迪莫</summary><p>
-<img src="https://files.seeusercontent.com/2026/04/02/bWn8/tujian.jpg"/> 
+<details><summary>rc图鉴 - 命令: rc图鉴龙息帕尔</summary><p>
+<img src="https://files.seeusercontent.com/2026/04/06/n7Ut/tujian.jpg"/> 
 </p></details>
 
 <details><summary>rc配种 - 命令: rc配种粉星仔 梦悠悠</summary><p>
