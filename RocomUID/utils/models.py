@@ -37,3 +37,23 @@ class UserInfo(Struct):
     collection: CollectionInfo
     items: UserItemsInfo
 
+################
+# 精灵详细列表 #
+################
+
+
+class PetListDetail(Struct):
+    SerialNum: str
+    PetBaseId: int
+    PetSkillDamType: Any
+    PetTalentRank: int
+    SpiritLevel: int
+    PetBlood: int
+    PetMutation: int
+
+class PetList(Struct):
+    list: List[PetListDetail]
+    total: int
+    page: int
+    pageSize: int
+    totalPages: int

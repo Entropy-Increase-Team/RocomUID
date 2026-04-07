@@ -29,7 +29,7 @@
 	  {
         "name": "我的信息",
         "desc": "我的信息",
-        "eg": "我的信息(测试绑定用)",
+        "eg": "我的信息/rcuid",
         "need_ck": true,
         "need_sk": true,
         "need_admin": false

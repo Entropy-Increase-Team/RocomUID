@@ -9,7 +9,6 @@ from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH, ROCOM_CHARACTER_PATH
 from ..utils.map.rocom_map import rocom_group_list, rocom_list, rocom_skill_list, characteristic_list, skill_list, rocom_evolution_list
 from ..utils.fonts.rocom_fonts import rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, skill_font_22, skill_font_32
-from gsuid_core.utils.image.image_tools import draw_pic_with_ring
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 mask_bar = Image.open(TEXT_PATH / 'mask_bar.png')

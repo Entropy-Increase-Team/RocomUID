@@ -10,16 +10,24 @@ from ..utils.database.model import RocomUser
 from ..utils.message import send_diff_msg
 from ..utils.api_client import APIClient
 from ..utils.convert import get_rocom_name2id
+from .draw_info_image import draw_user_info
 
 sv_user_info = SV('rc用户信息查询', priority=5)
 
-@sv_user_info.on_command('我的信息')
+@sv_user_info.on_command(('我的信息','rcuid'))
 async def get_my_user_info(bot: Bot, ev: Event):
+    bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
+    if not bind_uid:
+        return await bot.send("你还没有绑定RC_UID哦!")
     token = await RocomUser.get_rocom_token(ev.user_id, ev.bot_self_id)
     if not token:
         return await bot.send("用户token不存在，请绑定后再查询!")
-    data = await rocom_api.get_user_info(token=token)
-    await bot.send(str(data))
+    data_user = await rocom_api.get_user_info(token=token)
+    if data_user == 0:
+        return await bot.send("用户token已过期，请更新token后查询!")
+    data_pet = await rocom_api.get_rocom_pet_list_star(token=token)
+    im = await draw_user_info(ev, bind_uid, data_user, data_pet)
+    await bot.send(im, at_sender=True)
 
 @sv_user_info.on_command('我的精灵')
 async def get_my_user_info(bot: Bot, ev: Event):

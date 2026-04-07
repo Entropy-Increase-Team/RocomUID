@@ -2,7 +2,7 @@ import json
 import httpx
 import msgspec
 from typing import Dict, Any, Union, Literal, Optional
-from .models import UserInfo
+from .models import UserInfo, PetList
 
 class RocomApi():
     BASE_URL = "https://morefun.game.qq.com/gw2/gateway/v1/"
@@ -81,6 +81,65 @@ class RocomApi():
             # data = msgspec.convert(data["data"], type=UserInfo)
         return data
     
+    async def get_rocom_pet_list_star(
+        self,
+        token: str,
+        baseid: str = '',
+        openid: str = '',
+        account_type: str = 'qq',
+    ) -> Union[PetList, int]:
+        """
+        获取游戏信息接口
+        """
+        payload = {
+            "account_type": account_type,
+            "openid": openid,
+            "req_param":
+            {
+                "page":1,
+                "pageSize":80,
+                "searchKeyword":"",
+                "manual":False,
+                "sort":[
+                    {
+                        "field":"Count",
+                        "order":"desc"
+                    }
+                ],
+                "mutationFilter":[8,1,9],
+                "baseid":""
+            }
+        }
+
+        result = await self._post("/api/pet/list", 'POST', token, payload)
+        data = result.json()
+        if isinstance(data["data"], Dict):
+            data_9 = []
+            data_8 = []
+            data_1 = []
+            for item in data["data"]["list"]:
+                if item["PetMutation"] == 9:
+                    data_9.append(item)
+                if item["PetMutation"] == 8:
+                    data_8.append(item)
+                if item["PetMutation"] == 1:
+                    data_1.append(item)
+            pet_list = []
+            if len(data_9) > 0:
+                for item9 in data_9:
+                    pet_list.append(item9)
+            if len(data_1) > 0:
+                for item1 in data_1:
+                    pet_list.append(item1)
+            if len(data_8) > 0:
+                for item8 in data_8:
+                    pet_list.append(item8)
+            data["data"]["list"] = pet_list
+            data = msgspec.convert(data["data"], type=PetList)
+        else:
+            data = 0
+        return data
+    
     async def get_user_info(
         self,
         token: str,
@@ -97,8 +156,10 @@ class RocomApi():
 
         result = await self._post("/api/user/gameInfo", 'GET', token, payload)
         data = result.json()
-        if isinstance(data, Dict):
+        if isinstance(data["data"], Dict):
             data = msgspec.convert(data["data"], type=UserInfo)
+        else:
+            data = 0
         return data
 
 rocom_api = RocomApi()
