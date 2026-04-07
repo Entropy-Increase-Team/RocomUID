@@ -16,7 +16,7 @@
 
 > **注意：该插件为[早柚核心(gsuid_core)](https://github.com/Genshin-bots/gsuid_core)的扩展，具体安装方式可参考[GenshinUID](https://github.com/KimigaiiWuyi/GenshinUID)**
 >
-> **如果已经是最新版本的`gsuid_core`, 可以直接对bot发送`core安装插件rocom`，然后重启core以应用安装**
+> **如果已经是最新版本的`gsuid_core`, 可以直接对bot发送`core安装插件RocomUID`，然后重启core以应用安装**
 >
 > 如使用命令缺失素材可尝试使用命令`rc下载全部资源`
 >
