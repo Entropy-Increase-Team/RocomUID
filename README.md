@@ -50,11 +50,17 @@
 
 ## 丨帮助
 + 关于token获取
+
 > token为洛克王国小程序的Authorization字段
+>
 > 1·准备好常用的抓包软件(如Fiddler)
+>
 > 2·打开洛克王国小程序，点击我的，打开个人信息页面
+>
 > 3·在抓包软件中找到数据的链接(通常为morefun.game.qq.com/...)
+>
 > 4·选中后进入查看抓包信息，在信息中找到Authorization字段复制
+>
 > 5·返回机器人，输入绑定token+你获取到的Authorization完成绑定
 
 ## 丨其他
