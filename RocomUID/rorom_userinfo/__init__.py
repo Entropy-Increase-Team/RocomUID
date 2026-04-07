@@ -63,7 +63,7 @@ async def get_my_user_info(bot: Bot, ev: Event):
 async def add_my_user_token(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 1:
-        return await bot.send("请输入您需要绑定的token，用空格隔开!\n例rc绑定token xxtokenxx xxopenidxx\ntoken：用户authorization字段")
+        return await bot.send("请输入您需要绑定的token，用空格隔开!\n例rc绑定token xxtokenxx xxopenidxx\ntoken：用户authorization字段。\ntoken获取方式请输入【rctoken帮助】查询")
     bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
     if not bind_uid:
         return await bot.send("你还没有绑定RC_UID哦!")
@@ -78,6 +78,10 @@ async def add_my_user_token(bot: Bot, ev: Event):
         },
     )
     
+@sv_user_info.on_fullmatch("token帮助")
+async def send_bind_card(bot: Bot, ev: Event):
+    mes = "token为洛克王国小程序的Authorization字段\n1·准备好常用的抓包软件(如Fiddler)\n2·打开洛克王国小程序，点击我的，打开个人信息页面\n3·在抓包软件中找到数据的链接(通常为morefun·game·qq·com/)\n4·选中后进入查看抓包信息，在信息中找到Authorization字段复制\n5·返回机器人，输入绑定token+你获取到的Authorization完成绑定"
+    await bot.send(mes)
 
 @sv_user_info.on_fullmatch("绑定信息")
 async def send_bind_card(bot: Bot, ev: Event):

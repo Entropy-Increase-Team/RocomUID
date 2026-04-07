@@ -92,7 +92,7 @@ async def draw_user_info(ev, uid, userinfo, petinfo):
     img.paste(top_bg, (0, 0), top_bg)
     img.paste(title_fg, (0, 0), title_fg)
     #画头像
-    if ev.sender["avatar"]:
+    if ev.sender.get("avatar", '') != '':
         char_pic = await get_qq_avatar(avatar_url=ev.sender["avatar"])
         char_pic = await draw_pic_with_ring(char_pic, 152, None, False)
     else:
