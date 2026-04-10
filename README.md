@@ -30,6 +30,10 @@
 
 ## 丨功能
 
+<details><summary>rc帮助 - 命令: rc帮助</summary><p>
+<img src="https://files.seeusercontent.com/2026/04/10/rjX8/rchelp.jpg"/> 
+</p></details>
+
 <details><summary>rc图鉴 - 命令: rc图鉴龙息帕尔</summary><p>
 <img src="https://files.seeusercontent.com/2026/04/06/n7Ut/tujian.jpg"/> 
 </p></details>
