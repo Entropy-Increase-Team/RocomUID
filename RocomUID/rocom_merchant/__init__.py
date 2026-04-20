@@ -7,7 +7,7 @@ from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from datetime import datetime, timedelta
-from ..utils.rocom_api import wegame_api, cocom_co_api
+from ..utils.rocom_api import wegame_api
 from gsuid_core.subscribe import gs_subscribe
 from gsuid_core.aps import scheduler
 from ..utils.error_reply import prefix as P
@@ -26,18 +26,13 @@ async def get_merchant_info_list(bot: Bot, ev: Event):
     await bot.send(mesg, at_sender=True)
 
 # 每日定点执行远行商人推送
-@scheduler.scheduled_job('cron', hour ='*')
+@scheduler.scheduled_job('cron', hour ='*', minute='03')
 async def refresh_merchant_info():
     now = datetime.now(pytz.timezone('Asia/Shanghai'))
     this_hour = now.hour
     if this_hour not in [8, 12, 16, 20]:
         return
-    merchant_info= []
-    jishu = 0
-    while len(merchant_info) == 0 and jishu < 20:
-        await asyncio.sleep(5)
-        jishu = jishu + 1
-        merchant_info = await wegame_api.get_merchant_info(refresh=True)
+    merchant_info = await wegame_api.get_merchant_info(refresh=True)
     mesg = "远行商人商品刷新了："
     for item in merchant_info:
         mesg += f"\n{item['name']} 结束时间：{item['endtime']}"

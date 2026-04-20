@@ -17,21 +17,21 @@ app_info_list = {
 class WegameApi():
     BASE_URL = "https://wegame.shallow.ink/api/v1/games/rocom/"
     
-    def __init__(self, wegame_api_key: str = ""):
+    def __init__(self):
         """
         初始化客户端
         :param authorization: QQ 授权 token (Bearer JWT)
         :param act_id: 活动 ID
         """
-        self.wegame_api_key = wegame_api_key
         self.client = httpx.Client(timeout=10.0)  # 同步客户端
     
     async def _post(self, req_path: str, params: Dict[str, Any]) -> httpx.Response:
+        wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
         response = self.client.get(
             f"{self.BASE_URL}{req_path}",
             params=params,
             headers = {
-                'X-API-Key': self.wegame_api_key,
+                'X-API-Key': wegame_api_key,
             }
         )
         response.raise_for_status()
@@ -332,5 +332,4 @@ class RocomApi():
     
 cocom_co_api = Rocom_co_Api()
 rocom_api = RocomApi()
-wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
-wegame_api = WegameApi(wegame_api_key = wegame_api_key)
+wegame_api = WegameApi()
