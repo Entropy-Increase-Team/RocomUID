@@ -4,7 +4,7 @@
   <a href="https://github.com/jiluoQAQ/RocomUID"><img src="https://files.seeusercontent.com/2026/04/02/Knq0/ICON.png" width="256" height="256" alt="RocomUID"></a>
 </p>
 <h1 align = "center">RocomUID 1.0.0</h1>
-<h4 align = "center">🚧支持OneBot(QQ)、QQ频道、微信、开黑啦、Telegram的全功能洛克王国Bot插件🚧</h4>
+<h4 align = "center">🚧支持OneBot(QQ)、QQ频道、微信、开黑啦、Telegram的全功能洛克王国世界Bot插件🚧</h4>
 <div align = "center">
         <a href="https://docs.sayu-bot.com/" target="_blank">安装文档</a>
 </div>
@@ -18,13 +18,13 @@
 >
 > 如使用命令缺失素材可尝试使用命令`rc下载全部资源`
 >
-> 支持NoneBot2 & HoshinoBot & ZeroBot & YunzaiBot的洛克王国Bot插件
+> 支持NoneBot2 & HoshinoBot & ZeroBot & YunzaiBot的洛克王国世界Bot插件
 >
 > 🚧插件目前还在施工中，可以使用，功能快速迭代中...🚧
 > 
-> ✨如果需要添加其他洛克王国相关功能欢迎在issues中提出✨
+> ✨如果需要添加其他洛克王国世界相关功能欢迎在issues中提出✨
 > 
-> ✨问题交流，反馈群：1076222618✨
+> ✨插件问题交流，反馈群：1076222618✨
 
 ## 丨功能
 
