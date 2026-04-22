@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: WeGame 前后端 / API
+    url: https://github.com/Entropy-Increase-Team/WeGame-plugin/issues
+    about: 若问题属于 WeGame 侧接口、服务端或统一前后端行为（与 gscore/WeGame API 等），请到 WeGame-plugin 反馈
+  - name: QQ 交流群
+    url: https://qm.qq.com/q/VDBFadHGwA
+    about: 洛克王国世界插件交流，群号 1097809141

@@ -1,0 +1,96 @@
+name: 🐛 Bug 报告
+description: 报告 RocomUID（本仓库）相关 Bug
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本仓库是 **RocomUID**：在 **gsuid_core** 上运行的**独立**「洛克王国世界」Bot 插件，负责本仓库内命令、图鉴与 UI 绘制、与 core 的对接、本仓库数据与资源等，**与 Yunzai 的模块化安装方式无关，也不是 AstrBot 插件**。
+
+        若你判断问题出在 **WeGame 相关接口、服务端或统一前后端**（与 gscore 中配置的 wegame 能力、API 表现等有关），请往 [WeGame-plugin](https://github.com/Entropy-Increase-Team/WeGame-plugin/issues) 提交。
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 问题归属
+      description: 选最接近的一项；不确定可先选「本仓库」并写清现象
+      options:
+        - 本仓库：RocomUID 内（命令、图鉴/UI、与 gsuid 集成、本插件逻辑与资源）
+        - 更偏 WeGame 前后端 / API / 服务端（更建议到 WeGame-plugin）
+        - 其他 / 不确定
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bug-type
+    attributes:
+      label: 表现类型
+      options:
+        - 命令异常或无响应
+        - 图鉴/展示/本仓库资源或绘制错误
+        - wegame 配置、Token 或联调问题（先分辨是本插件侧还是接口侧）
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 发送/配置 '...'
+        2. ...
+        3. 出现现象
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或日志
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: 版本信息
+      description: RocomUID、gsuid_core、NoneBot/适配器等
+    validations:
+      required: false
+
+  - type: input
+    id: environment
+    attributes:
+      label: 运行环境
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+    validations:
+      required: false
