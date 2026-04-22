@@ -7,6 +7,7 @@ from gsuid_core.utils.database.base_models import (
     BaseModel,
     with_session,
 )
+from gsuid_core.utils.database.startup import exec_list
 
 T_RocomUser = TypeVar("T_RocomUser", bound="RocomUser")
 
@@ -15,6 +16,19 @@ class RocomUser(User, table=True):
     bot_id: str = Field(default="", title="机器人ID")
     uid: str = Field(default="", title="洛克王国账号ID")
     cookie: str = Field(default="", title="Cookie")
+    framework_token: str = Field(default="", title="framework_token")
+    binding_id: str = Field(default="", title="binding_id")
+    bind_time: int = Field(default=0, title="bind_time")
+    login_type: str = Field(default="", title="login_type")
+    
+    exec_list.extend(
+        [
+            'ALTER TABLE RocomUser ADD COLUMN framework_token TEXT DEFAULT ""',
+            'ALTER TABLE RocomUser ADD COLUMN binding_id TEXT DEFAULT ""',
+            'ALTER TABLE RocomUser ADD COLUMN bind_time INT DEFAULT 0',
+            'ALTER TABLE RocomUser ADD COLUMN login_type TEXT DEFAULT ""',
+        ]
+    )
     
     @classmethod
     async def insert_rocom_uid(
@@ -56,6 +70,33 @@ class RocomUser(User, table=True):
         return res
     
     @classmethod
+    async def insert_rocom_uid_qr(
+        cls: Type[T_RocomUser],
+        user_id: str,
+        bot_id: str,
+        binding: str,
+    ) -> int:
+        uid = binding.get('uid')
+        framework_token = binding.get('framework_token')
+        binding_id = binding.get('binding_id')
+        bind_time = binding.get('bind_time')
+        login_type = binding.get('login_type')
+        # 第一次绑定
+        if not await cls.select_data(user_id, bot_id):
+            code = await cls.insert_data(
+                user_id=user_id,
+                bot_id=bot_id,
+                **{"uid": uid, "framework_token": framework_token, "binding_id": binding_id, "bind_time": bind_time, "login_type":login_type},
+            )
+            return code
+        await cls.update_data(
+            user_id=user_id,
+            bot_id=bot_id,
+            **{"uid": uid, "framework_token": framework_token, "binding_id": binding_id, "bind_time": bind_time, "login_type":login_type},
+        )
+        return True
+        
+    @classmethod
     async def update_rocom_token(
         cls: Type[T_RocomUser],
         user_id: str,
@@ -68,6 +109,7 @@ class RocomUser(User, table=True):
             **{"cookie": token},
         )
         return res
+        
     
     @classmethod
     async def update_rocom_stoken(
@@ -82,6 +124,16 @@ class RocomUser(User, table=True):
             **{"stoken": account_type},
         )
         return res
+    
+    @classmethod
+    async def select_rocom_fw_token(
+        cls: Type[T_RocomUser],
+        user_id: str,
+        bot_id: str,
+    ) -> Union[str, int]:
+        result = await cls.select_data(user_id, bot_id)
+        fw_token = result.framework_token if result and result.framework_token else None
+        return fw_token
     
     @classmethod
     async def select_rocom_user(

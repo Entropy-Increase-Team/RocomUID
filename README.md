@@ -57,27 +57,16 @@
 </p></details>
 
 ## 丨部分功能使用说明
-+ 关于远行商人功能
++ 关于游戏数据获取
 >
->使用远行商人功能需要首次启动后去往gscore网站后台输入wegame_api_key后重启core才能使用
+>使用远行商人与个人数据获取功能需要配置wegame_api_key才能使用
 >
 >关于wegame_api_key：目前可以加群 [1097809141](https://qm.qq.com/q/8SuHC3siIM) 进行申请
 >
->或使用测试通用key：sk-f9a97f99fed455ae910d028edc172078
+>或使用目前测试通用wegame_api_key：sk-f9a97f99fed455ae910d028edc172078
 >
-+ 关于token获取
+>获取到wegame_api_key后去往gscore网站后台输入wegame_api_key后重启core才能使用
 >
-> token为洛克王国小程序的Authorization字段
->
-> 1·准备好常用的抓包软件(如Fiddler)
->
-> 2·打开洛克王国小程序，点击我的，打开个人信息页面
->
-> 3·在抓包软件中找到数据的链接(通常为morefun.game.qq.com/...)
->
-> 4·选中后进入查看抓包信息，在信息中找到Authorization字段复制
->
-> 5·返回机器人，输入rc绑定token+你获取到的Authorization完成绑定
 
 ## 丨项目进度
 + 游戏工具相关
@@ -87,10 +76,6 @@
 + 个人信息查询相关
 >
 > 精灵列表与精灵详情图UI绘制中
->
-+ API获取相关
->
-> 扫码登录获取数据等待研究(需求高手研究)
 >
 
 ## 丨其他

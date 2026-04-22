@@ -11,25 +11,17 @@
         "need_admin": false
       },
 	  {
-        "name": "绑定信息",
-        "desc": "绑定信息",
-        "eg": "绑定信息",
-        "need_ck": false,
-        "need_sk": false,
-        "need_admin": false
-      },
-	  {
-        "name": "绑定token",
-        "desc": "绑定token",
-        "eg": "绑定token[token]",
+        "name": "QQ登录",
+        "desc": "QQ扫码登录",
+        "eg": "QQ登录",
         "need_ck": true,
         "need_sk": true,
         "need_admin": false
       },
 	  {
-        "name": "我的信息",
-        "desc": "我的信息",
-        "eg": "我的信息/rcuid",
+        "name": "洛克档案",
+        "desc": "洛克档案",
+        "eg": "洛克档案/rcuid",
         "need_ck": true,
         "need_sk": true,
         "need_admin": false

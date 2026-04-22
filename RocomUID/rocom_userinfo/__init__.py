@@ -12,26 +12,120 @@ from gsuid_core.logger import logger
 from ..utils.database.model import RocomUser
 from ..utils.message import send_diff_msg
 from ..utils.api_client import APIClient
+from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name2id
-from .draw_info_image import draw_user_info
+from .draw_info_image import draw_user_info, draw_user_info_wegame
 
 sv_user_info = SV('rc用户信息查询', priority=5)
 
-@sv_user_info.on_command(('我的信息','uid'))
-async def get_my_user_info(bot: Bot, ev: Event):
-    bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
-    if not bind_uid:
-        return await bot.send("你还没有绑定RC_UID哦!")
-    token, account_type = await RocomUser.get_rocom_token(ev.user_id, ev.bot_self_id)
-    if not token:
-        return await bot.send("用户token不存在，请绑定后再查询!")
-    data_user = await rocom_api.get_user_info(token=token, account_type = account_type)
-    #print(data_user)
-    if isinstance(data_user, int):
-        return await bot.send(get_error(data_user))
-    data_pet = await rocom_api.get_rocom_pet_list_star(token=token, account_type = account_type)
-    #print(data_pet)
-    im = await draw_user_info(ev, bind_uid, data_user, data_pet)
+# @sv_user_info.on_command(('我的信息','uid'))
+# async def get_my_user_info(bot: Bot, ev: Event):
+    # bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
+    # if not bind_uid:
+        # return await bot.send("你还没有绑定RC_UID哦!")
+    # token, account_type = await RocomUser.get_rocom_token(ev.user_id, ev.bot_self_id)
+    # if not token:
+        # return await bot.send("用户token不存在，请绑定后再查询!")
+    # data_user = await rocom_api.get_user_info(token=token, account_type = account_type)
+    # #print(data_user)
+    # if isinstance(data_user, int):
+        # return await bot.send(get_error(data_user))
+    # data_pet = await rocom_api.get_rocom_pet_list_star(token=token, account_type = account_type)
+    # #print(data_pet)
+    # im = await draw_user_info(ev, bind_uid, data_user, data_pet)
+    # await bot.send(im, at_sender=True)
+
+@sv_user_info.on_command(('档案','洛克档案','uid','我的信息'))
+async def get_my_user_info_wegame(bot: Bot, ev: Event):
+    fw_token = await RocomUser.select_rocom_fw_token(ev.user_id, ev.bot_self_id)
+    if not fw_token:
+        return await bot.send(f"没有获取到您的登录状态，请输入{P}QQ登录/{P}WX登录，进行绑定后再查询")
+    await bot.send("正在获取洛克王国数据...")
+    role_task = wegame_api.get_role(fw_token)
+    coll_task = wegame_api.get_collection(fw_token)
+    battle_overview_task = wegame_api.get_battle_overview(fw_token)
+    results = await asyncio.gather(role_task, coll_task, battle_overview_task, return_exceptions=True)
+    role_res, coll_res, bo_res = results
+    #print(results)
+    if isinstance(role_res, Exception) or not role_res or not role_res.get("role"):
+        err_msg = str(role_res) if isinstance(role_res, Exception) else (role_res.get("message") if isinstance(role_res, dict) else "未知错误")
+        if "401" in err_msg or "403" in err_msg:
+            err_hint = "【凭据过期】请尝试重新通过 QQ/微信 登录绑定。"
+        else:
+            err_hint = f"接口返回错误: {err_msg}"
+        return await bot.send(f"获取角色档案失败。\n{err_hint}")
+    role = role_res["role"]
+    coll_res = coll_res if isinstance(coll_res, dict) else {}
+    bo_res = bo_res if isinstance(bo_res, dict) else {}
+    # 组装数据
+    data = {
+        "userName": role.get("name", "洛克"),
+        "userLevel": role.get("level", 1),
+        "userUid": role.get("id", ""),
+        "create_time": time.strftime("%Y-%m-%d", time.localtime(int(role.get("create_time", time.time())))),
+        "enrollDays": role.get("enroll_days", 0),
+        "starName": role.get("star_name", "魔法学徒"),
+        
+        "currentCollectionCount": coll_res.get("current_collection_count", 0),
+        "totalCollectionCount": f"{coll_res.get('total_collection_count', 0)}",
+        "amazingSpriteCount": coll_res.get("amazing_sprite_count", 0),
+        "shinySpriteCount": coll_res.get("shiny_sprite_count", 0),
+        "colorfulSpriteCount": coll_res.get("colorful_sprite_count", 0),
+        "fashionCollectionCount": coll_res.get("fashion_collection_count", 0),
+        "itemCount": coll_res.get("item_count", 0),
+        
+        "hasBattleData": bo_res.get("total_match", 0) > 0,
+        "BattleRank": f"{bo_res.get('tier', 0)}",
+        "winRate": f"{bo_res.get('win_rate', 0)}%",
+        "totalMatch": bo_res.get("total_match", 0),
+    }
+    pets_list = []
+    #获取异色数据
+    if coll_res.get("shiny_sprite_count", 0) > 0:
+        pet_res = await wegame_api.get_pets(fw_token, pet_subset=2, page_no=1, page_size=coll_res.get("shiny_sprite_count", 0))
+        for pet in pet_res.get("pets", []):
+            element_list = []
+            for t in pet.get("pet_types_info", []):
+                if t.get("id"):
+                    element_list.append(t.get("id", ""))
+            full_name = pet.get("pet_name", "")
+            if "&" in full_name:
+                name_parts = full_name.split("&", 1)
+                p_name = name_parts[0]
+            else:
+                p_name = full_name
+            pets_list.append({
+                "PetBaseId": pet.get("pet_base_id", 3011),
+                "name": p_name,
+                "PetMutation": pet.get("pet_mutation", 0),
+                "SpiritLevel": pet.get("pet_level", 1),
+                "PetSkillDamType": element_list,
+            })
+    #获取炫彩数据
+    if coll_res.get("colorful_sprite_count", 0) > 0:
+        pet_res = await wegame_api.get_pets(fw_token, pet_subset=3, page_no=1, page_size=coll_res.get("colorful_sprite_count", 0))
+        for pet in pet_res.get("pets", []):
+            if pet.get("pet_mutation", 0) not in [1,9]:
+                element_list = []
+                for t in pet.get("pet_types_info", []):
+                    if t.get("id"):
+                        element_list.append(t.get("id", ""))
+                full_name = pet.get("pet_name", "")
+                if "&" in full_name:
+                    name_parts = full_name.split("&", 1)
+                    p_name = name_parts[0]
+                else:
+                    p_name = full_name
+                pets_list.append({
+                    "PetBaseId": pet.get("pet_base_id", 3011),
+                    "name": p_name,
+                    "PetMutation": pet.get("pet_mutation", 0),
+                    "SpiritLevel": pet.get("pet_level", 1),
+                    "PetSkillDamType": element_list,
+                })
+    data['pets_list'] = pets_list
+    #print(data)
+    im = await draw_user_info_wegame(ev, data)
     await bot.send(im, at_sender=True)
 
 @sv_user_info.on_command('我的精灵')
@@ -47,22 +141,6 @@ async def get_my_user_info(bot: Bot, ev: Event):
         return await bot.send("用户token不存在，请绑定后再查询!")
     data = await rocom_api.get_rocom_pet_list(token=token, baseid=baseid, account_type=account_type)
     await bot.send(str(data))
-
-# @sv_user_info.on_command('查询信息')
-# async def get_my_rocom_info(bot: Bot, ev: Event):
-    # api_client = APIClient(
-        # use_miniapp_auth=False,  # Cookie池不使用小程序验证
-        # miniapp_auth='',
-        # miniapp_data="",  # Cookie池不需要data参数,仅用于兑换
-        # web_cookie="",
-        # timeout=5,
-        # use_proxy=False,
-        # proxy_host="",
-        # proxy_port=0
-    # )
-    # data = api_client._get_announcement_list_no_auth()
-    # print(str(data))
-    # #await bot.send(str(data))
 
 @sv_user_info.on_command("绑定token")
 async def add_my_user_token(bot: Bot, ev: Event):
