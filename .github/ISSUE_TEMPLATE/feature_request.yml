@@ -1,0 +1,62 @@
+name: 💡 功能建议 / 意见反馈
+description: 对 RocomUID 提建议或意见
+title: "[建议] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **本模板只面向 RocomUID**（基于 gsuid_core 的**独立**洛克王国世界 Bot 扩展），讨论本仓库内命令、图鉴、与 core 的集成等。
+
+        若需求主要落在 **WeGame 侧接口、服务端或统一前后端能力**，请到 [WeGame-plugin](https://github.com/Entropy-Increase-Team/WeGame-plugin/issues) 提出。
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: 建议归属
+      options:
+        - 本仓库：RocomUID 与 gsuid/Bot 侧能力
+        - 更偏 WeGame 前后端 / API（更建议到 WeGame-plugin）
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: suggestion-type
+    attributes:
+      label: 建议类型
+      options:
+        - 新功能请求
+        - 图鉴/命令/交互改进
+        - 文档
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 背景与需求
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: 希望实现的效果
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 可替代方案
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 补充信息
+    validations:
+      required: false
