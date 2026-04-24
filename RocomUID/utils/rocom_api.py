@@ -388,44 +388,48 @@ class WegameApi():
             self._wegame_headers(),
             params=params,
         )
-        activities = data.get("merchantActivities")
-        if activities is None:
-            activities = data.get("merchant_activities")
-        activity = activities[0] if activities else {}
-        props = activity.get("get_props", [])
-        products = []
-        
-        async def is_active(item: Dict[str, Any]) -> bool:
-            start_time = item.get("start_time")
-            end_time = item.get("end_time")
-            if start_time is None or end_time is None:
-                return True
-            try:
-                return int(start_time) <= nowtime < int(end_time)
-            except (TypeError, ValueError):
-                return True
-        for item in props:
-            if not await is_active(item):
-                continue
-            if item.get('start_time') is not None:
-                start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
-            else:
-                start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
-                start_time = f"{start_time} 08:00"
-            if item.get('end_time') is not None:
-                end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
-            else:
-                end_time = "23:59"
-            products.append(
-                {
-                    "name": item.get("name", "未知商品"),
-                    "image": item.get("icon_url", None),
-                    "starttime": start_time,
-                    "endtime": end_time,
-                }
-            )
-        
-        return products
+        if data is not None:
+            activities = data.get("merchantActivities")
+            if activities is None:
+                activities = data.get("merchant_activities")
+            activity = activities[0] if activities else {}
+            props = activity.get("get_props", [])
+            products = []
+            
+            async def is_active(item: Dict[str, Any]) -> bool:
+                start_time = item.get("start_time")
+                end_time = item.get("end_time")
+                if start_time is None or end_time is None:
+                    return True
+                try:
+                    return int(start_time) <= nowtime < int(end_time)
+                except (TypeError, ValueError):
+                    return True
+            # print(props)
+            for item in props:
+                if not await is_active(item):
+                    continue
+                if item.get('start_time') is not None:
+                    start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
+                else:
+                    start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
+                    start_time = f"{start_time} 08:00"
+                if item.get('end_time') is not None:
+                    end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
+                else:
+                    end_time = "23:59"
+                products.append(
+                    {
+                        "name": item.get("name", "未知商品"),
+                        "image": item.get("icon_url", None),
+                        "starttime": start_time,
+                        "endtime": end_time,
+                    }
+                )
+            
+            return products
+        else:
+            return []
 
 class RocomApi():
     BASE_URL = "https://morefun.game.qq.com/gw2/gateway/v1/"

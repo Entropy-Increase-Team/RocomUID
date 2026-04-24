@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageChops
 from gsuid_core.utils.image.convert import convert_img
-from ..utils.fonts.rocom_fonts import rc_font_44, skill_font_18, skill_font_26
+from ..utils.fonts.rocom_fonts import rc_font_40, skill_font_18, skill_font_26
 from gsuid_core.utils.image.image_tools import get_pic
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -96,7 +96,7 @@ async def draw_merchant_info(merchant_info):
             (210, 116),
             f"{prop_item['name']}",
             (255, 255, 63),
-            rc_font_44,
+            rc_font_40,
             'lm',
         )
         
