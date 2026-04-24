@@ -25,13 +25,13 @@ sv_rc_rocom_info = SV('rc基础信息查询', priority=5)
 async def get_rocom_egg_name(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 2:
-        return await bot.send('请输入需要查询精灵蛋的尺寸与重量', at_sender=True)
+        return await bot.send('请输入需要查询精灵蛋的尺寸与重量')
     length = args[0]
     if not await is_numeric(length):
-        return await bot.send('请输入正确的尺寸信息', at_sender=True)
+        return await bot.send('请输入正确的尺寸信息')
     weight = args[1]
     if not await is_numeric(weight):
-        return await bot.send('请输入正确的重量信息', at_sender=True)
+        return await bot.send('请输入正确的重量信息')
     egg_list = copy.deepcopy(rocom_egg_build)
     find_list = []
     for item in rocom_egg_conf:
@@ -70,19 +70,19 @@ async def get_rocom_egg_name(bot: Bot, ev: Event):
 async def get_rocom_egg_info(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 2:
-        return await bot.send('请输入需要查询配种信息的父母精灵名称[父母精灵请输入最终进化型进行查询]', at_sender=True)
+        return await bot.send('请输入需要查询配种信息的父母精灵名称[父母精灵请输入最终进化型进行查询]')
     rocom_name1 = await get_rocom_name(args[0])
     if rocom_name1 == '':
-        return await bot.send('精灵名不存在，请输入正确的精灵名称', at_sender=True)
+        return await bot.send('精灵名不存在，请输入正确的精灵名称')
     rocom_name2 = await get_rocom_name(args[1])
     if rocom_name2 == '':
-        return await bot.send('精灵名不存在，请输入正确的精灵名称', at_sender=True)
+        return await bot.send('精灵名不存在，请输入正确的精灵名称')
         
     group1 = rocom_group_list[rocom_name1]
     group2 = rocom_group_list[rocom_name2]
     
     if group1[0] == '无' or group2[0] == '无':
-        return await bot.send(f'{rocom_name1}与{rocom_name2}无法进行配种哦', at_sender=True)
+        return await bot.send(f'{rocom_name1}与{rocom_name2}无法进行配种哦')
     
     peizhong_flag = 0
     for item in group1:
@@ -90,32 +90,32 @@ async def get_rocom_egg_info(bot: Bot, ev: Event):
             peizhong_flag = 1
     
     if peizhong_flag == 0:
-        await bot.send(f'{rocom_name1}与{rocom_name2}无法进行配种哦', at_sender=True)
+        await bot.send(f'{rocom_name1}与{rocom_name2}无法进行配种哦')
     else:
-        await bot.send(f'{rocom_name1}与{rocom_name2}可以进行配种哦~', at_sender=True)
+        await bot.send(f'{rocom_name1}与{rocom_name2}可以进行配种哦~')
         
 @sv_rc_rocom_info.on_command('技能信息')
 async def get_rocom_skill_info(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 1:
-        return await bot.send('请输入需要查询的技能名称', at_sender=True)
+        return await bot.send('请输入需要查询的技能名称')
     skill_name = args[0]
     if skill_name not in skill_list.keys():
-        return await bot.send('技能名不存在，请输入正确的技能名称', at_sender=True)
+        return await bot.send('技能名不存在，请输入正确的技能名称')
     
     skill_info = skill_list[skill_name]
     weili = '--' if skill_info[2] == '0' else skill_info[2]
     mes = f"技能名称：{skill_name}\n技能属性：{skill_info[0]}\n技能消耗：{skill_info[1]}cost\n技能威力：{weili}\n技能介绍：{skill_info[3]}"
-    await bot.send(mes, at_sender=True)
+    await bot.send(mes)
     
 @sv_rc_rocom_info.on_command('图鉴')
 async def get_rocom_info_img(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 1:
-        return await bot.send('请输入需要查询的精灵名称', at_sender=True)
+        return await bot.send('请输入需要查询的精灵名称')
     rocom_name = await get_rocom_name(args[0])
     if rocom_name not in rocom_list.keys():
-        return await bot.send('精灵名称不存在，请输入正确的精灵名称', at_sender=True)
+        return await bot.send('精灵名称不存在，请输入正确的精灵名称')
     
     im = await draw_rocom_info(rocom_name)
     url = await _image_to_local_url(im)
@@ -137,7 +137,7 @@ async def get_rocom_info_img(bot: Bot, ev: Event):
 async def find_rocom_list_info(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 1:
-        return await bot.send('请输入 查找精灵+查找条件[名字/属性/蛋组/特性/技能/种族(生命、物攻、魔攻、物防、魔防、速度[小于/大于])] 不同的筛选条件用空格分开，类型与内容用逗号分开。\n举例：查找精灵 特性,最好的伙伴 技能,折射,光球 魔攻,大于,60', at_sender=True)
+        return await bot.send('请输入 查找精灵+查找条件[名字/属性/蛋组/特性/技能/种族(生命、物攻、魔攻、物防、魔防、速度[小于/大于])] 不同的筛选条件用空格分开，类型与内容用逗号分开。\n举例：查找精灵 特性,最好的伙伴 技能,折射,光球 魔攻,大于,60')
     find_tj_list = ['名字','特性','技能','生命','物攻','物防','魔攻','魔防','速度','属性','蛋组']
     zhongzu_index_list = {
         '生命':0,

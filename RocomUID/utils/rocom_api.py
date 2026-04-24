@@ -407,12 +407,21 @@ class WegameApi():
         for item in props:
             if not await is_active(item):
                 continue
+            if item.get('start_time') is not None:
+                start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
+            else:
+                start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
+                start_time = f"{start_time} 08:00"
+            if item.get('end_time') is not None:
+                end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
+            else:
+                end_time = "23:59"
             products.append(
                 {
                     "name": item.get("name", "未知商品"),
                     "image": item.get("icon_url", None),
-                    "starttime": time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000)),
-                    "endtime": time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000)),
+                    "starttime": start_time,
+                    "endtime": end_time,
                 }
             )
         
