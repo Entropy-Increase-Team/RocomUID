@@ -26,7 +26,9 @@ async def get_merchant_info_list(bot: Bot, ev: Event):
 
 @sv_merchant.on_command(('商人'))
 async def get_merchant_info_list_cs(bot: Bot, ev: Event):
-    merchant_info = await wegame_api.get_merchant_info_cs()
+    # for index in [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020]:
+        # merchant_info = await wegame_api.get_merchant_info_cs(index)
+    merchant_info = await wegame_api.get_merchant_info_cs(3019)
     await bot.send(str(merchant_info), at_sender=True)
 
 # 每日定点执行远行商人推送

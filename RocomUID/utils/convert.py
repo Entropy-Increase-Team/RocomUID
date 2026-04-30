@@ -48,7 +48,7 @@ async def get_rocom_name(name):
         rocom_name, confi = await roster.guess_name(name)
         guess = True
     if confi < 60:
-        return 0
+        return ''
     if guess:
         return rocom_name
     return ''
