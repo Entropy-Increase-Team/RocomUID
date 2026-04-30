@@ -15,6 +15,8 @@ from ..utils.api_client import APIClient
 from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name2id
 from .draw_info_image import draw_user_info, draw_user_info_wegame
+from ..rocom_config.rocom_config import RC_CONFIG
+wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
 
 sv_user_info = SV('rc用户信息查询', priority=5)
 
@@ -37,6 +39,8 @@ sv_user_info = SV('rc用户信息查询', priority=5)
 
 @sv_user_info.on_command(('档案','洛克档案','uid','我的信息'))
 async def get_my_user_info_wegame(bot: Bot, ev: Event):
+    if wegame_api_key == '':
+        return await bot.send("未设置wegame_api_key，请联系机器人管理员设置后再次查询")
     fw_token = await RocomUser.select_rocom_fw_token(ev.user_id, ev.bot_self_id)
     if not fw_token:
         return await bot.send(f"没有获取到您的登录状态，请输入{P}QQ登录/{P}WX登录，进行绑定后再查询")

@@ -13,12 +13,16 @@ from gsuid_core.aps import scheduler
 from ..utils.error_reply import prefix as P
 from ..rocom_config.rocom_config import RC_CONFIG
 from .draw_info_image import draw_merchant_info
+from ..rocom_config.rocom_config import RC_CONFIG
+wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
 
 sv_merchant = SV('rc远行商人事件', priority=5)
 
 @sv_merchant.on_command(('远行商人'))
 async def get_merchant_info_list(bot: Bot, ev: Event):
-    merchant_info = await wegame_api.get_merchant_info(refresh=True)
+    if wegame_api_key == '':
+        return await bot.send("未设置wegame_api_key，请联系机器人管理员设置后再次查询", at_sender=True)
+    merchant_info = await wegame_api.get_merchant_info()
     if len(merchant_info) == 0:
         return await bot.send(f"远行商人商品未刷新\n可输入[{P}开启远行商人]订阅远行商人商品信息推送", at_sender=True)
     im = await draw_merchant_info(merchant_info)
@@ -34,6 +38,9 @@ async def get_merchant_info_list_cs(bot: Bot, ev: Event):
 # 每日定点执行远行商人推送
 @scheduler.scheduled_job('cron', hour ='*', minute='05')
 async def refresh_merchant_info():
+    if wegame_api_key == '':
+        logger.warning("您未设置wegame_api_key，请设置后再次查询")
+        return
     now = datetime.now(pytz.timezone('Asia/Shanghai'))
     this_hour = now.hour
     if this_hour not in [8, 12, 16, 20]:
@@ -45,7 +52,7 @@ async def refresh_merchant_info():
         await asyncio.sleep(merchant_cd)
         jishu = jishu + 1
         print(f"正在进行第{jishu}次数据获取")
-        merchant_info = await wegame_api.get_merchant_info(refresh=True)
+        merchant_info = await wegame_api.get_merchant_info()
     im = await draw_merchant_info(merchant_info)
     datas = await gs_subscribe.get_subscribe('[洛克王国] 远行商人')
     for data in datas:

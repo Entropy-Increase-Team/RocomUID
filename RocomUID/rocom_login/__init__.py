@@ -14,11 +14,15 @@ from ..utils.error_reply import get_error
 from gsuid_core.logger import logger
 from ..utils.database.model import RocomUser
 from gsuid_core.utils.image.convert import convert_img
+from ..rocom_config.rocom_config import RC_CONFIG
+wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
 
 sv_user_login = SV('rc用户登录', priority=5)
 
 @sv_user_login.on_command(('QQ登录','QQ扫码'))
 async def rocom_qq_login(bot: Bot, ev: Event):
+    if wegame_api_key == '':
+        return await bot.send("未设置wegame_api_key，请联系机器人管理员设置后再次查询", at_sender=True)
     user_id = ev.user_id
     qr_data = await wegame_api.qq_qr_login(user_id)
     if not qr_data or "qr_image" not in qr_data:
@@ -80,6 +84,8 @@ async def rocom_qq_login(bot: Bot, ev: Event):
 
 @sv_user_login.on_command(('WX登录','微信扫码'))
 async def rocom_wx_login(bot: Bot, ev: Event):
+    if wegame_api_key == '':
+        return await bot.send("未设置wegame_api_key，请联系机器人管理员设置后再次查询", at_sender=True)
     user_id = ev.user_id
     qr_data = await wegame_api.wechat_qr_login(user_id)
     if not qr_data or "qr_image" not in qr_data:
