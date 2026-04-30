@@ -1,6 +1,7 @@
 import json
 import httpx
 import msgspec
+import asyncio
 import time
 from gsuid_core.logger import logger
 from typing import Dict, Any, Union, Literal, Optional
@@ -32,6 +33,9 @@ class WegameApi():
     def _clear_last_error(self) -> None:
         self.last_error_message = ""
     
+    def _set_last_error(self, message: str) -> None:
+        self.last_error_message = message
+    
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=self.timeout)
@@ -60,91 +64,89 @@ class WegameApi():
             headers["X-User-Identifier"] = self._sanitize_uid(user_identifier)
         return headers
     
-    async def _get(
-        self, path: str, headers: Dict[str, str], params: Optional[Dict] = None
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        headers: Dict[str, str],
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
     ) -> Optional[Dict]:
         try:
             self._clear_last_error()
             client = await self._get_client()
-            resp = await client.get(
-                f"{self.base_url}{path}", headers=headers, params=params
-            )
-            # 检查响应状态码
-            if resp.status_code != 200:
-                logger.warning(f"[Rocom API] {path} HTTP 错误: {resp.status_code}")
+
+            if method == "GET":
+                resp = await client.get(f"{self.base_url}{path}", headers=headers, params=params)
+            elif method == "POST":
+                resp = await client.post(f"{self.base_url}{path}", headers=headers, json=json_data, params=params)
+            elif method == "DELETE":
+                resp = await client.delete(f"{self.base_url}{path}", headers=headers)
+            else:
+                logger.error(f"[Rocom API] 不支持的 HTTP 方法: {method}")
+                self._set_last_error(f"不支持的 HTTP 方法: {method}")
                 return None
-            
-            # 检查响应内容是否为空
+            # print(str(resp.json()))
+            if resp.status_code == 202:
+                now_time = time.time()
+                # print(now_time)
+                task_json = resp.json()
+                task_id = task_json['data']['task_id']
+                while time.time() - now_time <= 300:
+                    # print(time.time())
+                    task_resp = await client.get(f"{self.base_url}/api/v1/games/rocom/ingame/tasks/{task_id}", headers=headers)
+                    #print(str(task_resp.json()))
+                    task_json = task_resp.json()
+                    if task_json['data'].get('status', '') in ['running', 'queued']:
+                        #print(task_json['data'].get('status', ''))
+                        logger.info(f"排队中，已等待{int(time.time() - now_time)}S")
+                        await asyncio.sleep(3)
+                    else:
+                        logger.info(f"数据获取成功，等待时间{int(time.time() - now_time)}S")
+                        resp = task_resp
+                        break
+                    
+            # print(time.time())
+            if resp.status_code != 200:
+                body_hint = resp.text[:300] if resp.text else ""
+                try:
+                    body_json = resp.json()
+                    body_hint = body_json.get("message") or body_hint
+                except Exception:
+                    pass
+                logger.warning(f"[Rocom API] {path} HTTP 错误: {resp.status_code} {body_hint}")
+                self._set_last_error(f"HTTP {resp.status_code}: {body_hint}".strip(": "))
+                return None
+
             if not resp.text or not resp.text.strip():
                 logger.warning(f"[Rocom API] {path} 响应为空")
+                self._set_last_error("响应为空")
                 return None
-            
-            # 安全解析 JSON
+
             try:
                 data = resp.json()
             except Exception as json_err:
                 logger.warning(f"[Rocom API] {path} JSON 解析失败: {json_err}, 响应内容: {resp.text[:200]}")
+                self._set_last_error("JSON 解析失败")
                 return None
-            
+
             if data.get("code") != 0:
-                logger.warning(f"[Rocom API] {path} 错误: {data.get('message', '未知')}")
+                err_message = data.get("message", "未知")
+                logger.warning(f"[Rocom API] {path} 错误: {err_message}")
+                self._set_last_error(str(err_message))
                 return None
             return data.get("data", {})
         except httpx.TimeoutException:
-            logger.error(f"[Rocom API] GET {path} 请求超时")
+            logger.error(f"[Rocom API] {method} {path} 请求超时")
+            self._set_last_error("请求超时")
             return None
         except httpx.RequestError as e:
-            logger.error(f"[Rocom API] GET {path} 请求失败: {e}")
+            logger.error(f"[Rocom API] {method} {path} 请求失败: {e}")
+            self._set_last_error(f"请求失败: {e}")
             return None
         except Exception as e:
-            logger.error(f"[Rocom API] GET {path} 异常: {e}")
-            return None
-    
-    async def _post(
-        self,
-        path: str,
-        headers: Dict[str, str],
-        json_data: Optional[Dict] = None,
-        params: Optional[Dict] = None,
-    ) -> Optional[Dict]:
-        try:
-            client = await self._get_client()
-            resp = await client.post(
-                f"{self.base_url}{path}",
-                headers=headers,
-                json=json_data,
-                params=params,
-            )
-            print(resp)
-            # 检查响应状态码
-            if resp.status_code != 200:
-                logger.warning(f"[Rocom API] {path} HTTP 错误: {resp.status_code}")
-                return None
-            
-            # 检查响应内容是否为空
-            if not resp.text or not resp.text.strip():
-                logger.warning(f"[Rocom API] {path} 响应为空")
-                return None
-            
-            # 安全解析 JSON
-            try:
-                data = resp.json()
-            except Exception as json_err:
-                logger.warning(f"[Rocom API] {path} JSON 解析失败: {json_err}, 响应内容: {resp.text[:200]}")
-                return None
-            
-            if data.get("code") != 0:
-                logger.warning(f"[Rocom API] {path} 错误: {data.get('message', '未知')}")
-                return None
-            return data.get("data", {})
-        except httpx.TimeoutException:
-            logger.error(f"[Rocom API] POST {path} 请求超时")
-            return None
-        except httpx.RequestError as e:
-            logger.error(f"[Rocom API] POST {path} 请求失败: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"[Rocom API] POST {path} 异常: {e}")
+            logger.error(f"[Rocom API] {method} {path} 异常: {e}")
+            self._set_last_error(f"异常: {e}")
             return None
     
     def _sanitize_uid(self, uid: str) -> str:
@@ -165,7 +167,8 @@ class WegameApi():
         params = {"client_type": "bot", "client_id": "gscore"}
         if user_identifier:
             params["user_identifier"] = self._sanitize_uid(user_identifier)
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/wechat/qr",
             self._wegame_headers(user_identifier=user_identifier),
             params=params,
@@ -178,7 +181,8 @@ class WegameApi():
         params = {}
         if user_identifier:
             params["user_identifier"] = self._sanitize_uid(user_identifier)
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/wechat/status",
             self._wegame_headers(
                 fw_token, user_identifier=user_identifier
@@ -194,7 +198,8 @@ class WegameApi():
         params = {}
         if user_identifier:
             params["user_identifier"] = user_identifier
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/token",
             self._wegame_headers(fw_token, user_identifier),
             params=params,
@@ -208,7 +213,8 @@ class WegameApi():
         params = {}
         if user_identifier:
             params["user_identifier"] = user_identifier
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/wechat/token",
             self._wegame_headers(fw_token, user_identifier),
             params=params,
@@ -219,7 +225,8 @@ class WegameApi():
         params = {"client_type": "bot", "client_id": "gscore"}
         if user_identifier:
             params["user_identifier"] = self._sanitize_uid(user_identifier)
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/qr",
             self._wegame_headers(user_identifier=user_identifier),
             params=params,
@@ -232,7 +239,8 @@ class WegameApi():
         params = {}
         if user_identifier:
             params["user_identifier"] = self._sanitize_uid(user_identifier)
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/login/wegame/status",
             self._wegame_headers(
                 fw_token, user_identifier=user_identifier
@@ -251,7 +259,8 @@ class WegameApi():
             "client_type": "bot",
             "client_id": "gscore",
         }
-        return await self._post(
+        return await self._request(
+            "POST",
             "/api/v1/user/bindings",
             # 这里必须带 API Key
             self._wegame_headers(user_identifier=user_identifier),
@@ -267,7 +276,8 @@ class WegameApi():
         params = {}
         if account_type:
             params["account_type"] = account_type
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/profile/role",
             self._rocom_headers(fw_token),
             params=params,
@@ -280,7 +290,8 @@ class WegameApi():
         params = {}
         if account_type:
             params["account_type"] = account_type
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/profile/evaluation",
             self._rocom_headers(fw_token),
             params=params,
@@ -293,7 +304,8 @@ class WegameApi():
         params = {}
         if account_type:
             params["account_type"] = account_type
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/profile/pet-summary",
             self._rocom_headers(fw_token),
             params=params,
@@ -306,7 +318,8 @@ class WegameApi():
         params = {}
         if account_type:
             params["account_type"] = account_type
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/profile/collection",
             self._rocom_headers(fw_token),
             params=params,
@@ -319,7 +332,8 @@ class WegameApi():
         params = {}
         if account_type:
             params["account_type"] = account_type
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/profile/battle-overview",
             self._rocom_headers(fw_token),
             params=params,
@@ -338,7 +352,8 @@ class WegameApi():
             params["after_time"] = after_time
         if zone is not None:
             params["zone"] = zone
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/battle/list",
             self._rocom_headers(fw_token),
             params=params,
@@ -360,21 +375,24 @@ class WegameApi():
         }
         if zone is not None:
             params["zone"] = zone
-        return await self._get(
+        return await self._request(
+            "GET",
             "/api/v1/games/rocom/battle/pets",
             self._rocom_headers(fw_token),
             params,
         )
     
-    async def get_merchant_info_cs(self):
-        params = {"shop_id": 3019}
+    async def get_merchant_info_cs(self, shopid):
+        params = {"shop_id": shopid, "wait_ms":5000}
         nowtime = time.time() * 1000
-        data = await self._post(
+        data = await self._request(
+            "POST",
             "/api/v1/games/rocom/ingame/merchant/info",
             self._wegame_headers(),
             json_data=params,
         )
-        print(data)
+        
+        print(f'{shopid}:{data}')
         return data
     
     async def get_merchant_info(self, refresh: bool = False):
@@ -383,49 +401,54 @@ class WegameApi():
         """
         params = {"refresh": "true" if refresh else "false"}
         nowtime = time.time() * 1000
-        data = await self._get(
+        data = await self._request(
+            "GET",
             "/api/v1/games/rocom/merchant/info",
             self._wegame_headers(),
             params=params,
         )
-        activities = data.get("merchantActivities")
-        if activities is None:
-            activities = data.get("merchant_activities")
-        activity = activities[0] if activities else {}
-        props = activity.get("get_props", [])
-        products = []
-        
-        async def is_active(item: Dict[str, Any]) -> bool:
-            start_time = item.get("start_time")
-            end_time = item.get("end_time")
-            if start_time is None or end_time is None:
-                return True
-            try:
-                return int(start_time) <= nowtime < int(end_time)
-            except (TypeError, ValueError):
-                return True
-        for item in props:
-            if not await is_active(item):
-                continue
-            if item.get('start_time') is not None:
-                start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
-            else:
-                start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
-                start_time = f"{start_time} 08:00"
-            if item.get('end_time') is not None:
-                end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
-            else:
-                end_time = "23:59"
-            products.append(
-                {
-                    "name": item.get("name", "未知商品"),
-                    "image": item.get("icon_url", None),
-                    "starttime": start_time,
-                    "endtime": end_time,
-                }
-            )
-        
-        return products
+        if data is not None:
+            activities = data.get("merchantActivities")
+            if activities is None:
+                activities = data.get("merchant_activities")
+            activity = activities[0] if activities else {}
+            props = activity.get("get_props", [])
+            products = []
+            
+            async def is_active(item: Dict[str, Any]) -> bool:
+                start_time = item.get("start_time")
+                end_time = item.get("end_time")
+                if start_time is None or end_time is None:
+                    return True
+                try:
+                    return int(start_time) <= nowtime < int(end_time)
+                except (TypeError, ValueError):
+                    return True
+            # print(props)
+            for item in props:
+                if not await is_active(item):
+                    continue
+                if item.get('start_time') is not None:
+                    start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
+                else:
+                    start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
+                    start_time = f"{start_time} 08:00"
+                if item.get('end_time') is not None:
+                    end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
+                else:
+                    end_time = "23:59"
+                products.append(
+                    {
+                        "name": item.get("name", "未知商品"),
+                        "image": item.get("icon_url", None),
+                        "starttime": start_time,
+                        "endtime": end_time,
+                    }
+                )
+            
+            return products
+        else:
+            return []
 
 class RocomApi():
     BASE_URL = "https://morefun.game.qq.com/gw2/gateway/v1/"

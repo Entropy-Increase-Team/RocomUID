@@ -19,7 +19,7 @@ sv_merchant = SV('rc远行商人事件', priority=5)
 
 @sv_merchant.on_command(('远行商人'))
 async def get_merchant_info_list(bot: Bot, ev: Event):
-    merchant_info = await wegame_api.get_merchant_info(refresh=True)
+    merchant_info = await wegame_api.get_merchant_info()
     if len(merchant_info) == 0:
         return await bot.send(f"远行商人商品未刷新\n可输入[{P}开启远行商人]订阅远行商人商品信息推送")
     im = await draw_merchant_info(merchant_info)
