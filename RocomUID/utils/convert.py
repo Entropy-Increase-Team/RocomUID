@@ -15,6 +15,13 @@ with Path.open(Excel_path / 'map' /'breeding.json', encoding='utf-8') as f:
 with Path.open(Excel_path / 'map' /'rank_list.json', encoding='utf-8') as f:
     rank_list = json.load(f)
 
+with Path.open(Excel_path / 'map' /'RANDOM_GOODS_CONF.json', encoding='utf-8') as f:
+    random_goods = json.load(f)
+    random_good_list = random_goods['RocoDataRows']
+
+with Path.open(Excel_path / 'map' /'home_item_list.json', encoding='utf-8') as f:
+    home_plant_list = json.load(f)
+
 class Roster:
     def __init__(self):
         self._roster = pygtrie.CharTrie()
@@ -48,7 +55,7 @@ async def get_rocom_name(name):
         rocom_name, confi = await roster.guess_name(name)
         guess = True
     if confi < 60:
-        return ''
+        return 0
     if guess:
         return rocom_name
     return ''
@@ -67,3 +74,7 @@ async def get_rankid2name(rankid):
         if str(rankid) == item['id']:
             return item['name']
     return '————'
+
+async def get_plant_info(plantid):
+    plant_info = home_plant_list[str(plantid)]
+    return plant_info

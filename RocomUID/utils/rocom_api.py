@@ -16,6 +16,165 @@ app_info_list = {
     "wxmini": ["wx9a5bc2cdcaff1af1", 1, 0]
 }
 
+class TEXTAPI():
+    base_url = "text_url"
+    def __init__(self, wegame_api_key: str, timeout: float = 15.0):
+        """
+        初始化客户端
+        :param authorization: QQ 授权 token (Bearer JWT)
+        :param act_id: 活动 ID
+        """
+        self.wegame_api_key = wegame_api_key
+        self.timeout = timeout
+        self._client: Optional[httpx.AsyncClient] = None
+        self.last_error_message: str = ""
+    
+    def _clear_last_error(self) -> None:
+        self.last_error_message = ""
+    
+    def _set_last_error(self, message: str) -> None:
+        self.last_error_message = message
+    
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=self.timeout)
+        return self._client
+    
+    def _rocom_headers(self, fw_token: str) -> Dict[str, str]:
+        """游戏数据查询接口的请求头 (scope=game:rocom)"""
+        headers = {
+            "X-Framework-Token": fw_token
+        }
+        if self.wegame_api_key:
+            headers["X-API-Key"] = self.wegame_api_key
+        return headers
+    
+    def _wegame_headers(
+        self, fw_token: str = "", user_identifier: str = ""
+    ) -> Dict[str, str]:
+        """登录/账号管理接口的请求头 (scope=wegame)"""
+        headers = {}
+        if self.wegame_api_key:
+            headers["X-API-Key"] = self.wegame_api_key
+        
+        if fw_token:
+            headers["X-Framework-Token"] = fw_token
+        if user_identifier:
+            headers["X-User-Identifier"] = self._sanitize_uid(user_identifier)
+        return headers
+    
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        headers: Dict[str, str],
+        params: Optional[Dict] = None,
+        json_data: Optional[Dict] = None,
+    ) -> Optional[Dict]:
+        try:
+            self._clear_last_error()
+            client = await self._get_client()
+
+            if method == "GET":
+                resp = await client.get(f"{self.base_url}{path}", headers=headers, params=params)
+            elif method == "POST":
+                resp = await client.post(f"{self.base_url}{path}", headers=headers, json=json_data, params=params)
+            elif method == "DELETE":
+                resp = await client.delete(f"{self.base_url}{path}", headers=headers)
+            else:
+                logger.error(f"[Rocom API] 不支持的 HTTP 方法: {method}")
+                self._set_last_error(f"不支持的 HTTP 方法: {method}")
+                return None
+            # print(str(resp.json()))
+            if resp.status_code == 202:
+                now_time = time.time()
+                # print(now_time)
+                task_json = resp.json()
+                task_id = task_json['data']['task_id']
+                while time.time() - now_time <= 300:
+                    # print(time.time())
+                    task_resp = await client.get(f"{self.base_url}/api/v1/games/rocom/ingame/tasks/{task_id}", headers=headers)
+                    #print(str(task_resp.json()))
+                    task_json = task_resp.json()
+                    if task_json['data'].get('status', '') in ['running', 'queued']:
+                        #print(task_json['data'].get('status', ''))
+                        logger.info(f"排队中，已等待{int(time.time() - now_time)}S")
+                        await asyncio.sleep(3)
+                    else:
+                        logger.info(f"数据获取成功，等待时间{int(time.time() - now_time)}S")
+                        resp = task_resp
+                        break
+                    
+            # print(time.time())
+            if resp.status_code != 200:
+                body_hint = resp.text[:300] if resp.text else ""
+                try:
+                    body_json = resp.json()
+                    body_hint = body_json.get("message") or body_hint
+                except Exception:
+                    pass
+                logger.warning(f"[Rocom API] {path} HTTP 错误: {resp.status_code} {body_hint}")
+                self._set_last_error(f"HTTP {resp.status_code}: {body_hint}".strip(": "))
+                return None
+
+            if not resp.text or not resp.text.strip():
+                logger.warning(f"[Rocom API] {path} 响应为空")
+                self._set_last_error("响应为空")
+                return None
+
+            try:
+                data = resp.json()
+            except Exception as json_err:
+                logger.warning(f"[Rocom API] {path} JSON 解析失败: {json_err}, 响应内容: {resp.text[:200]}")
+                self._set_last_error("JSON 解析失败")
+                return None
+
+            if data.get("code") != 0:
+                err_message = data.get("message", "未知")
+                logger.warning(f"[Rocom API] {path} 错误: {err_message}")
+                self._set_last_error(str(err_message))
+                return None
+            return data.get("data", {})
+        except httpx.TimeoutException:
+            logger.error(f"[Rocom API] {method} {path} 请求超时")
+            self._set_last_error("请求超时")
+            return None
+        except httpx.RequestError as e:
+            logger.error(f"[Rocom API] {method} {path} 请求失败: {e}")
+            self._set_last_error(f"请求失败: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"[Rocom API] {method} {path} 异常: {e}")
+            self._set_last_error(f"异常: {e}")
+            return None
+    
+    async def get_home_info(self, uid: str):
+        """
+        获取游戏信息接口
+        """
+        params = {"uid": uid, "wait_ms":20000}
+        data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/ingame/home/info",
+            self._wegame_headers(),
+            params=params,
+        )
+        #print(f'{data}')
+        return data
+    
+    async def get_merchant_info_cs(self, shopid):
+        params = {"shop_id": shopid, "wait_ms":5000}
+        nowtime = time.time() * 1000
+        data = await self._request(
+            "POST",
+            "/api/v1/games/rocom/ingame/merchant/info",
+            self._wegame_headers(),
+            json_data=params,
+        )
+        
+        print(f'{shopid}:{data}')
+        return data
+
 class WegameApi():
     base_url = "https://wegame.shallow.ink"
     
@@ -624,3 +783,4 @@ class RocomApi():
     
 rocom_api = RocomApi()
 wegame_api = WegameApi()
+text_api = TEXTAPI()

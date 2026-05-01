@@ -7,7 +7,7 @@ from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from datetime import datetime, timedelta
-from ..utils.rocom_api import wegame_api
+from ..utils.rocom_api import wegame_api,text_api
 from gsuid_core.subscribe import gs_subscribe
 from gsuid_core.aps import scheduler
 from ..utils.error_reply import prefix as P
@@ -30,9 +30,10 @@ async def get_merchant_info_list(bot: Bot, ev: Event):
 
 @sv_merchant.on_command(('商人'))
 async def get_merchant_info_list_cs(bot: Bot, ev: Event):
-    # for index in [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020]:
-        # merchant_info = await wegame_api.get_merchant_info_cs(index)
-    merchant_info = await wegame_api.get_merchant_info_cs(3019)
+    for index in [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020]:
+        await asyncio.sleep(8)
+        merchant_info = await text_api.get_merchant_info_cs(index)
+    #merchant_info = await wegame_api.get_merchant_info_cs(3019)
     await bot.send(str(merchant_info), at_sender=True)
 
 # 每日定点执行远行商人推送
