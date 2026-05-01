@@ -11,7 +11,6 @@ from ..utils.error_reply import get_error
 from gsuid_core.logger import logger
 from ..utils.database.model import RocomUser
 from ..utils.message import send_diff_msg
-from ..utils.api_client import APIClient
 from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name2id
 from .draw_info_image import draw_user_info, draw_user_info_wegame

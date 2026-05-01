@@ -18,7 +18,7 @@ app_info_list = {
 
 class TEXTAPI():
     base_url = "text_url"
-    def __init__(self, wegame_api_key: str, timeout: float = 15.0):
+    def __init__(self, wegame_api_key: str = '', timeout: float = 15.0):
         """
         初始化客户端
         :param authorization: QQ 授权 token (Bearer JWT)
