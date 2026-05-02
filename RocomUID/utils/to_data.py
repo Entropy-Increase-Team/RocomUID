@@ -22,7 +22,7 @@ async def api_to_dict_home_info(
     home_info["home_info"]["home_pets"] = []
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']
     for index, petinfo in enumerate(home_pets):
-        if index == 0:
+        if petinfo['home_pet_info']['pet_cfg_id'] == 0:
             continue
         pet_info = {}
         pet_info['pet_id'] = petinfo['home_pet_info']['pet_cfg_id']
