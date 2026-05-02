@@ -52,8 +52,12 @@
 <img src="https://files.seeusercontent.com/2026/04/02/5tvK/select_rocom.png"/> 
 </p></details>
 
-<details><summary>rcuid - 命令: rcuid/rc我的信息(需要绑定token才能使用)</summary><p>
+<details><summary>rcuid - 命令: rcuid/rc洛克档案(需要登录后才能使用)</summary><p>
 <img src="https://files.seeusercontent.com/2026/04/07/Pf4z/myuserinfo.jpg"/> 
+</p></details>
+
+<details><summary>rc家园 - 命令: rc家园/rchome(需要wegame_api_key才可使用)</summary><p>
+<img src="https://files.seeusercontent.com/2026/05/02/tO1w/home.jpeg"/> 
 </p></details>
 
 ## 丨部分功能使用说明

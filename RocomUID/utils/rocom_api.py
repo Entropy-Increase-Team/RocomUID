@@ -18,7 +18,7 @@ app_info_list = {
 
 class TEXTAPI():
     base_url = "text_url"
-    def __init__(self, wegame_api_key: str = '', timeout: float = 15.0):
+    def __init__(self, wegame_api_key: str = "", timeout: float = 15.0):
         """
         初始化客户端
         :param authorization: QQ 授权 token (Bearer JWT)
@@ -540,6 +540,20 @@ class WegameApi():
             self._rocom_headers(fw_token),
             params,
         )
+    
+    async def get_home_info(self, uid: str):
+        """
+        获取游戏信息接口
+        """
+        params = {"uid": uid, "wait_ms":20000}
+        data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/ingame/home/info",
+            self._wegame_headers(),
+            params=params,
+        )
+        #print(f'{data}')
+        return data
     
     async def get_merchant_info_cs(self, shopid):
         params = {"shop_id": shopid, "wait_ms":5000}

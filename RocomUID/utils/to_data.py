@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import Dict, List, Tuple, Union
-from .rocom_api import text_api
+from .rocom_api import wegame_api
 from .convert import get_plant_info
 from msgspec import json as msgjson
 
@@ -8,7 +8,7 @@ async def api_to_dict_home_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
 ):
-    home_data = await text_api.get_home_info(uid)
+    home_data = await wegame_api.get_home_info(uid)
     homeinfo = home_data['home_info']
     home_info = {}
     home_info["home_info"] = {}
@@ -30,9 +30,12 @@ async def api_to_dict_home_info(
         pet_info['gender'] = petinfo['display_info']['gender']
         pet_info['level'] = petinfo['display_info']['level']
         pet_info['mutation_type'] = petinfo['display_info']['mutation_type']
+        pet_info['feed_info'] = {}
         if petinfo['home_pet_info'].get('feed_info', 0) != 0:
+            pet_info["time_cost"] = int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)
             pet_info['pet_rip_time'] = int(petinfo['home_pet_info']['feed_info']['begin_time']/1000000) + int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)
         else:
+            pet_info["time_cost"] = 0
             pet_info['pet_rip_time'] = 0
         pet_info['have_egg'] = petinfo['have_egg']
         home_info["home_info"]["home_pets"].append(pet_info)
@@ -46,6 +49,7 @@ async def api_to_dict_home_info(
             continue
         plant_info['plant_info'] = await get_plant_info(plantinfo['plant_seed_id'])
         plant_info['plant_rip_time'] = plantinfo['plant_rip_time']
+        plant_info['plant_tab_id'] = plantinfo['plant_tab_id']
         home_info["home_info"]['home_plants'].append(plant_info)
     home_info["meta"] = home_data["meta"]
     if save_path and uid:

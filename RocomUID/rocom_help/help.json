@@ -36,13 +36,21 @@
         "desc": "远行商人",
         "eg": "远行商人",
         "need_ck": false,
-        "need_sk": false,
+        "need_sk": true,
         "need_admin": false
       },
 	  {
         "name": "远行商人推送",
         "desc": "[开启/关闭]远行商人",
         "eg": "[开启/关闭]远行商人",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      },
+	  {
+        "name": "家园",
+        "desc": "家园",
+        "eg": "家园[UID]",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
