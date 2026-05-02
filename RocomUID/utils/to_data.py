@@ -30,7 +30,6 @@ async def api_to_dict_home_info(
         pet_info['gender'] = petinfo['display_info']['gender']
         pet_info['level'] = petinfo['display_info']['level']
         pet_info['mutation_type'] = petinfo['display_info']['mutation_type']
-        pet_info['feed_info'] = {}
         if petinfo['home_pet_info'].get('feed_info', 0) != 0:
             pet_info["time_cost"] = int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)
             pet_info['pet_rip_time'] = int(petinfo['home_pet_info']['feed_info']['begin_time']/1000000) + int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)

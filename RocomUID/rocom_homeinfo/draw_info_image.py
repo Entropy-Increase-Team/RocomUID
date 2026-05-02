@@ -178,13 +178,13 @@ async def draw_home_info(ev, uid, home_info):
                     minutes = (delta.seconds % 3600) // 60
                     pet_draw.text(
                         (166, 109),
-                        f'{hours}小时{minutes}分钟',
+                        f'{hours}时{minutes}分',
                         (255, 255, 255),
                         rc_font_28,
                         'lm',
                     )
                     jindu_zhanbi = (pet_info['time_cost'] - (pet_rip_time - now_time)) / pet_info['time_cost']
-                    jindu_len = int(269 * jindu_zhanbi) + 1
+                    jindu_len = max(5, int(269 * jindu_zhanbi) + 1)
                 jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
                 pet_img.paste(jindu_bar, (166, 132), jindu_bar)
             else:
@@ -251,7 +251,7 @@ async def draw_home_info(ev, uid, home_info):
                 minutes = (delta.seconds % 3600) // 60
                 plant_draw.text(
                     (131, 81),
-                    f'{hours}小时{minutes}分钟',
+                    f'{hours}时{minutes}分',
                     (255, 255, 255),
                     rc_font_26,
                     'lm',
@@ -260,7 +260,7 @@ async def draw_home_info(ev, uid, home_info):
                 jindu_tc = Image.open(TEXT_PATH / 'jindu_tc.png').convert('RGBA').resize((147, 13))
                 plant_img.paste(jindu_tc, (130, 103), jindu_tc)
                 jindu_zhanbi = ((21600 * plant_info['plant_tab_id']) - (plant_rip_time - now_time)) / (21600 * plant_info['plant_tab_id'])
-                jindu_len = int(146 * jindu_zhanbi) + 1
+                jindu_len = max(5, int(146 * jindu_zhanbi) + 1)
                 jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
                 plant_img.paste(jindu_bar, (130, 103), jindu_bar)
                 
