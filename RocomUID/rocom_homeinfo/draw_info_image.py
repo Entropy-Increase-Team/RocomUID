@@ -129,13 +129,17 @@ async def draw_home_info(ev, uid, home_info):
             rc_x = shul - (2 * rc_y)
             pet_img = Image.new('RGBA', (486, 192), (255, 255, 255, 0))
             pet_bg_img = Image.new('RGBA', (486, 192), (110, 171, 32))
-            pet_img.paste(pet_bg_img, (0, 0), pet_bg)
+            pet_img.paste(pet_bg, (0, 0), pet_bg)
             
             if pet_info['mutation_type'] in [9, 1]:
                 head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png').convert('RGBA').resize((150, 150))
             else:
                 head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png').convert('RGBA').resize((150, 150))
             pet_img.paste(head_img, (24, 28), head_img)
+            
+            if pet_info['mutation_type'] in [1,8,9]:
+                star_img = Image.open(TEXT_PATH / f'star_{pet_info["mutation_type"]}.png').convert('RGBA').resize((70, 70))
+                pet_img.paste(star_img, (21, 8), star_img)
             
             pet_draw = ImageDraw.Draw(pet_img)
             pet_draw.text(
@@ -240,7 +244,7 @@ async def draw_home_info(ev, uid, home_info):
                     'lm',
                 )
             else:
-                plant_bg_img = Image.new('RGBA', (306, 148), (103, 68, 198, 255))
+                plant_bg_img = Image.new('RGBA', (306, 148), (110, 171, 32, 255))
                 plant_img.paste(plant_bg_img, (0, 0), plant_bg)
                 dt1 = datetime.utcfromtimestamp(now_time)
                 dt2 = datetime.utcfromtimestamp(plant_rip_time)
