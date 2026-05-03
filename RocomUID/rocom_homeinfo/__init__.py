@@ -48,7 +48,7 @@ async def get_my_home_info(uid):
                 return_local_flag = 1
             if return_local_flag == 1:
                 return home_data["home_info"]
-    print("正在获取服务器数据")
+    #print("正在获取服务器数据")
     home_data = await api_to_dict_home_info(uid, PLAYER_PATH)
     return home_data
 
@@ -62,7 +62,9 @@ async def get_my_home_info_refresh(bot: Bot, ev: Event):
     else:
         uid = args[0]
     await bot.send(f"正在刷新[UID]{uid}的家园信息，请稍后")
-    home_data = await text_api.get_home_info(uid)
+    home_data = await wegame_api.get_home_info(uid)
+    if home_data == None:
+        return await bot.send(await wegame_api._get_last_error())
     await bot.send(f"[UID]{uid}的家园信息已刷新，请输入{P}家园{uid}进行查询")
 
 @sv_home_info.on_command(('家园','home'))
@@ -77,6 +79,7 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
     await bot.send(f"正在获取[UID]{uid}的家园信息，请稍后")
     
     home_info = await get_my_home_info(uid)
-    
+    if isinstance(home_info, str):
+        return await bot.send(home_info)
     im = await draw_home_info(ev, uid, home_info)
     await bot.send(im)

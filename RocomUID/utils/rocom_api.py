@@ -195,6 +195,9 @@ class WegameApi():
     def _set_last_error(self, message: str) -> None:
         self.last_error_message = message
     
+    async def _get_last_error(self) -> None:
+        return self.last_error_message
+    
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=self.timeout)

@@ -9,6 +9,8 @@ async def api_to_dict_home_info(
     save_path: Union[Path, None] = None,
 ):
     home_data = await wegame_api.get_home_info(uid)
+    if home_data == None:
+        return await wegame_api._get_last_error()
     homeinfo = home_data['home_info']
     home_info = {}
     home_info["home_info"] = {}
