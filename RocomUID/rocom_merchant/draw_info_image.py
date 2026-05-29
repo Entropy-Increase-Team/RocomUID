@@ -14,6 +14,8 @@ badge = Image.open(TEXT_PATH / 'badge.png')
 banner = Image.open(TEXT_PATH / 'banner.png')
 susume = Image.open(TEXT_PATH / 'susume.png')
 footer = Image.open(TEXT_PATH / 'footer.png')
+top_img = Image.open(TEXT_PATH / 'bg_top.jpg').convert('RGB')
+footer_img = Image.open(TEXT_PATH / 'bg_footer.jpg').convert('RGB')
 
 lunci_list = [
     ['1', 8, 11],
@@ -23,13 +25,23 @@ lunci_list = [
 ]
 
 async def draw_merchant_info(merchant_info):
-    img = Image.open(TEXT_PATH / 'bg.jpg').convert('RGB')
-    img.paste(banner, (196, 252), banner)
-    img_draw = ImageDraw.Draw(img)
     prop_num = len(merchant_info)
+    prop_height = max(556, math.ceil(prop_num/2) * 206)
     now = datetime.now(pytz.timezone('Asia/Shanghai'))
     this_hour = now.hour
     this_minute = now.minute
+    
+    img_height = prop_height + 474
+    img = Image.new('RGBA', (1000, img_height))
+    img.paste(top_img, (0, 0))
+    bg_center = Image.open(TEXT_PATH / 'bg_center.jpg').resize(
+        (1000, prop_height)
+    )
+    img.paste(bg_center, (0, 321))
+    img.paste(footer_img, (0, prop_height + 321))
+    img.paste(banner, (196, 252), banner)
+    img_draw = ImageDraw.Draw(img)
+    
     lunci = '1'
     lunci_index = 0
     for item in lunci_list:
@@ -111,6 +123,6 @@ async def draw_merchant_info(merchant_info):
         if prop_item['name'] in ['炫彩精灵蛋', '棱镜球', '国王球']:
             prop_img.paste(susume, (371, 37), susume)
         img.paste(prop_img, (453 * rc_x + 14, rc_y * 206 + start_height), prop_img)
-    img.paste(footer, (277, 941), footer)
+    img.paste(footer, (277, img_height - 95), footer)
     res = await convert_img(img)
     return res

@@ -5,7 +5,7 @@ import asyncio
 import pytz
 from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
-from gsuid_core.models import Event
+from gsuid_core.models import Event, Message
 from datetime import datetime, timedelta
 from ..utils.rocom_api import wegame_api
 from gsuid_core.logger import logger
@@ -49,7 +49,8 @@ async def refresh_merchant_info():
     im = await draw_merchant_info(merchant_info)
     datas = await gs_subscribe.get_subscribe('[洛克王国] 远行商人')
     for data in datas:
+        await asyncio.sleep(1)
         try:
-            await data.send(im)
+            await data.send([im,Message(type="active_message", data=True)])
         except Exception as e:
             logger.warning(f'远行商人推送失败!错误信息:{e}')

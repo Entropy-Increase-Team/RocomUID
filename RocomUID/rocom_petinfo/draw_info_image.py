@@ -10,7 +10,7 @@ from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
 from ..utils.fonts.rocom_fonts import rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, rc_font_22, rc_font_28, rc_font_44, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
-from ..utils.convert import get_pet_name_info
+from ..utils.convert import get_pet_info
 from ..utils.error_reply import prefix
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -156,7 +156,7 @@ async def draw_pet_info(uid, pet_data):
         'mm',
     )
     
-    pet_base = await get_pet_name_info(pet_data["pet_id"])
+    pet_base = await get_pet_info(pet_data["pet_id"])
     img_draw.text(
         (1050, 280),
         f'UID{uid}',
@@ -164,17 +164,23 @@ async def draw_pet_info(uid, pet_data):
         rc_font_30,
         'rm',
     )
-    pet_bg_img = Image.new('RGBA', (575, 575), SHUX_LIST_DRAW[pet_base['unit_type'][0]][0])
+    pet_bg_img = Image.new('RGBA', (575, 575), SHUX_LIST_DRAW[pet_base['unit_type_list'][0]][0])
     img.paste(pet_bg_img, (-6, 359), pet_bg_mask)
     # 画形象
     pet_icon_name = pet_base['icon']
     if pet_data['mutation_type'] in [9, 1]:
         pet_icon_name = pet_base['icon'] + '_yise'
+    pet_head_icon = ROCOM_ICON_PATH / f'{pet_icon_name}.png'
+    if not os.path.exists(pet_head_icon):
+        pet_head_icon = ROCOM_HEAD_PATH / 'dimo.png'
+    
     pokemon_img = (
-        Image.open(ROCOM_ICON_PATH / f'{pet_icon_name}.png')
+        Image.open(pet_head_icon)
         .convert('RGBA')
         .resize((552, 552))
     )
+    
+    
     
     img.paste(pokemon_img, (0, 371), pokemon_img)
     
@@ -448,11 +454,14 @@ async def draw_pet_list(uid, pet_data):
         #画背景与头像
         if pet_info['mutation_type'] in [9, 1]:
             overlay_img = copy.deepcopy(yise_overlay)
-            head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png').convert('RGBA').resize((130, 130))
+            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png'
         else:
             overlay_img = copy.deepcopy(xuancai_overlay)
-            head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png').convert('RGBA').resize((130, 130))
-        pet_base = await get_pet_name_info(pet_info["pet_id"])
+            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png'
+        if not os.path.exists(pet_head_icon):
+            pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
+        head_img = Image.open(pet_head_icon).convert('RGBA').resize((130, 130))
+        pet_base = await get_pet_info(pet_info["pet_id"])
         pet_bg_img = Image.new('RGBA', (150, 216), SHUX_LIST_DRAW[pet_base['unit_type'][0]][0])
         combined_image = ImageChops.overlay(pet_bg_img, overlay_img)
         rocom_img.paste(combined_image, (0, 0), pet_bg)

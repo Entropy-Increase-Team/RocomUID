@@ -63,7 +63,6 @@
 >
 >关于wegame_api_key：目前可以加群 [1097809141](https://qm.qq.com/q/8SuHC3siIM) 进行申请
 >
->或使用目前测试通用wegame_api_key：sk-f9a97f99fed455ae910d028edc172078
 >
 >获取到wegame_api_key后去往gscore网站后台输入wegame_api_key后重启core才能使用
 >

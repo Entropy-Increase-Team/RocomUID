@@ -8,10 +8,6 @@ Excel_path = Path(__file__).parent
 with Path.open(Excel_path / 'map' /'name-map.json', encoding='utf-8') as f:
     name_id_list = json.load(f)
 
-Excel_path = Path(__file__).parent
-with Path.open(Excel_path / 'map' /'pet_name_map.json', encoding='utf-8') as f:
-    pet_name_list = json.load(f)
-
 with Path.open(Excel_path / 'map' /'breeding.json', encoding='utf-8') as f:
     breeding = json.load(f)
     rocom_egg_conf = breeding["pet_egg_conf"]
@@ -98,10 +94,6 @@ async def get_plant_info(plantid):
 async def get_skill_info(skillid):
     skill_info = pet_skill_list[str(skillid)]
     return skill_info
-
-async def get_pet_name_info(petid):
-    name_info = pet_name_list[str(petid)]
-    return name_info
     
 async def get_pet_info(petid):
     pet_info = pet_list[str(petid)]

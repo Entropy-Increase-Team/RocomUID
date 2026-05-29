@@ -601,11 +601,13 @@ class WegameApi():
                 except (TypeError, ValueError):
                     return True
             # print(props)
+            find_flag = 0
             for item in props:
                 if not await is_active(item):
                     continue
                 if item.get('start_time') is not None:
                     start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
+                    find_flag = 1
                 else:
                     start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
                     start_time = f"{start_time} 08:00"
@@ -621,8 +623,10 @@ class WegameApi():
                         "endtime": end_time,
                     }
                 )
-            
-            return products
+            if find_flag == 1:
+                return products
+            else:
+                return []
         else:
             return []
 

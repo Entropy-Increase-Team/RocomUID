@@ -411,10 +411,14 @@ async def draw_user_info_wegame(ev, date):
             rocom_img = Image.new('RGBA', (150, 216), (255, 255, 255, 0))
             if rocom_item['PetMutation'] in [9, 1]:
                 overlay_img = copy.deepcopy(yise_overlay)
-                head_img = Image.open(ROCOM_HEAD_PATH / f'{rocom_item["PetBaseId"]}_1.png').convert('RGBA').resize((130, 130))
+                head_img = Image.open().convert('RGBA').resize((130, 130))
+                pet_head_icon = ROCOM_HEAD_PATH / f'{rocom_item["PetBaseId"]}_1.png'
             else:
                 overlay_img = copy.deepcopy(xuancai_overlay)
-                head_img = Image.open(ROCOM_HEAD_PATH / f'{rocom_item["PetBaseId"]}.png').convert('RGBA').resize((130, 130))
+                pet_head_icon = ROCOM_HEAD_PATH / f'{rocom_item["PetBaseId"]}.png'
+            if not os.path.exists(pet_head_icon):
+                pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
+            head_img = Image.open(pet_head_icon).convert('RGBA').resize((130, 130))
             pet_bg_img = Image.new('RGBA', (150, 216), SHUX_LIST_DRAW[rocom_item['PetSkillDamType'][0]])
             combined_image = ImageChops.overlay(pet_bg_img, overlay_img)
             rocom_img.paste(combined_image, (0, 0), pet_bg)

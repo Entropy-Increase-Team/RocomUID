@@ -3,11 +3,12 @@ import math
 from pathlib import Path
 import pytz
 import time
+import os
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageChops
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH
-from ..utils.fonts.rocom_fonts import rc_font_22, rc_font_26, rc_font_28, rc_font_30, rc_font_35, skill_font_38, skill_font_42, skill_font_46
+from ..utils.fonts.rocom_fonts import rc_font_22, rc_font_26, rc_font_28, rc_font_30, rc_font_35, skill_font_24, skill_font_38, skill_font_42, skill_font_46
 from gsuid_core.utils.image.image_tools import get_pic
 from gsuid_core.utils.image.image_tools import (
     draw_pic_with_ring,
@@ -26,7 +27,7 @@ footer = Image.open(TEXT_PATH / 'footer.png')
 info_text_color = (66, 66, 66)
 
 async def draw_home_info(ev, uid, home_info):
-    bg_height = 410
+    bg_height = 460
     pet_list_height = math.ceil(len(home_info['home_pets']) / 2) * 192
     if pet_list_height > 0:
         bg_height = bg_height + 120 + pet_list_height
@@ -132,9 +133,12 @@ async def draw_home_info(ev, uid, home_info):
             pet_img.paste(pet_bg, (0, 0), pet_bg)
             
             if pet_info['mutation_type'] in [9, 1]:
-                head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png').convert('RGBA').resize((150, 150))
+                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png'
             else:
-                head_img = Image.open(ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png').convert('RGBA').resize((150, 150))
+                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png'
+            if not os.path.exists(pet_head_icon):
+                pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
+            head_img = Image.open(pet_head_icon).convert('RGBA').resize((130, 130))
             pet_img.paste(head_img, (24, 28), head_img)
             
             if pet_info['mutation_type'] in [1,8,9]:
@@ -282,8 +286,16 @@ async def draw_home_info(ev, uid, home_info):
                 'lm',
             )
             img.paste(plant_img, (306 * rc_x + 46, rc_y * 148 + start_height), plant_img)
-            
-            
+    
+    dt = datetime.fromtimestamp(int(home_info['finished_at']))
+    img_draw.text(
+        (920, bg_height - 80),
+        f"数据更新时间：{dt.strftime('%Y-%m-%d %H:%M:%S')}",
+        (0, 0, 0),
+        skill_font_24,
+        'rm',
+    )
+    
     img.paste(footer, (270, bg_height - 44), footer) 
     res = await convert_img(img)
     return res

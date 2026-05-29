@@ -25,10 +25,13 @@ sv_home_info = SV('rc家园事件', priority=5)
 async def get_my_home_info(uid):
     #优先获取本地缓存数据
     home_info_path = PLAYER_PATH / uid / 'home_info.json'
+    local_home_data = ''
     if os.path.exists(home_info_path):
         now_time = time.time()
         with Path.open(home_info_path, encoding='utf-8') as f:
             home_data = json.load(f)
+            local_home_data = home_data["home_info"]
+            local_home_data['finished_at'] = home_data['meta']["finished_at"]
             return_local_flag = 0
             min_pet_rip_time = now_time + 604800
             if len(home_data["home_info"]["home_pets"]) > 0:
@@ -47,9 +50,14 @@ async def get_my_home_info(uid):
             if (int(now_time) - int(home_data['meta']['created_at'])) <= 1800:
                 return_local_flag = 1
             if return_local_flag == 1:
-                return home_data["home_info"]
+                return local_home_data
     #print("正在获取服务器数据")
     home_data = await api_to_dict_home_info(uid, PLAYER_PATH)
+    if isinstance(home_data, str):
+        if isinstance(local_home_data, str):
+            return home_data
+        else:
+            home_data = local_home_data
     return home_data
 
 @sv_home_info.on_command(('刷新家园','rehome'))

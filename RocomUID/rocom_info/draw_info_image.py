@@ -247,7 +247,10 @@ async def draw_rocom_info(rocom_info):
     for index, item in enumerate(rocom_info["evolution_list"]):
         icon_x = x_num + jinhua_icon_list[f'{jinhua_num}_{index}']
         img.paste(jinhua_bg, (icon_x, y_num), jinhua_bg)
-        pokemon_img = Image.open(ROCOM_ICON_PATH / f'{item["icon"]}.png').convert('RGBA').resize((150, 150))
+        pet_icon = ROCOM_ICON_PATH / f'{item["icon"]}.png'
+        if not os.path.exists(pet_icon):
+            pet_icon = ROCOM_ICON_PATH / f'JL_dimo.png'
+        pokemon_img = Image.open(pet_icon).convert('RGBA').resize((150, 150))
         img.paste(pokemon_img, (icon_x - 5, y_num + 10), pokemon_img)
         img_draw.text(
             (icon_x + 70, y_num + 220),

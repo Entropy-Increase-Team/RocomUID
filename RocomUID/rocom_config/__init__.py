@@ -33,18 +33,18 @@ async def open_switch_func(bot: Bot, ev: Event):
         open_type = '用户'
         uid = ev.user_id
     
+    command = str(getattr(ev, 'command', '')).strip()
+    action = '开启' if '开启' in command else '关闭' if '关闭' in command else command
     logger.info(
-        f'[洛克王国服务] [{user_id}]尝试[{ev.command[2:]}]了[{ev.text}]功能'
+        f'[洛克王国服务] [{user_id}]尝试[{action}]了[{ev.text}]功能'
     )
 
     c_name = f'[洛克王国] {config_name}'
 
-    if '开启' in ev.command:
+    if action == '开启':
         im = f'🔨 [洛克王国服务]\n✅ 已为[{open_type}{uid}]开启{config_name}功能。'
 
-        if PRIV_MAP[config_name] is None and await gs_subscribe.get_subscribe(
-            c_name, uid=uid
-        ):
+        if await gs_subscribe.get_subscribe(c_name, uid=uid):
             await Subscribe.update_data_by_data(
                 {
                     'task_name': c_name,
@@ -56,7 +56,9 @@ async def open_switch_func(bot: Bot, ev: Event):
                     'group_id': ev.group_id,
                     'bot_self_id': ev.bot_self_id,
                     'user_type': ev.user_type,
+                    'extra_message': PRIV_MAP[config_name],
                     'WS_BOT_ID': ev.WS_BOT_ID,
+                    'msg_id': ev.msg_id,
                 },
             )
         else:
@@ -74,17 +76,10 @@ async def open_switch_func(bot: Bot, ev: Event):
                 im += '\n⚠ 警告: 由于未打开推送总开关, 所以此项设置可能无效！'
                 im += f'如需打开总开关, 请发送命令开启推送: {P}开启推送！'
     else:
-        data = await gs_subscribe.get_subscribe(
-            c_name,
-            ev.user_id,
-            ev.bot_id,
-            ev.user_type,
-        )
+        data = await gs_subscribe.get_subscribe(c_name, uid=uid)
         if data:
-            await gs_subscribe.delete_subscribe(
-                'single',
-                c_name,
-                ev,
+            await Subscribe.delete_row(
+                task_name=c_name,
                 uid=uid,
             )
             im = f'🔨 [洛克王国服务]\n✅ 已为[{open_type}{uid}]关闭{config_name}功能。'
