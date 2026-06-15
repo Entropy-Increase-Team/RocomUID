@@ -31,9 +31,10 @@ def format_egg_countdown_text(target_time: int, now_time: int) -> str:
     days = remaining_seconds // 86400
     hours = (remaining_seconds % 86400) // 3600
     minutes = (remaining_seconds % 3600) // 60
+    seconds = remaining_seconds % 60
 
-    if remaining_seconds <= 0:
-        return '预计已生蛋'
+    if remaining_seconds < 60:
+        return f'{seconds}秒'
 
     day_mes = f'{days}天' if days > 0 else ''
     return f'{day_mes}{hours}时{minutes}分'
@@ -166,7 +167,7 @@ async def draw_home_info(ev, uid, home_info):
                 'lm',
             )
             predicted_egg_time = int(pet_info.get('predicted_egg_time') or 0)
-            has_predicted_egg_time = pet_info['gender'] == 2 and predicted_egg_time > 0
+            has_predicted_egg_time = pet_info['gender'] == 2 and predicted_egg_time > now_time
             if pet_info['gender'] == 2:
                 name_right = pet_draw.textbbox((166, 75), f'{pet_info["name"]}', font=rc_font_35, anchor='lm')[2] + 15
                 if pet_info['have_egg']:
