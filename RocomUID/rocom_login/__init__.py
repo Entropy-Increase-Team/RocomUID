@@ -57,7 +57,7 @@ async def rocom_qq_login(bot: Bot, ev: Event):
         if not bind_res or not bind_res.get("binding"):
             return await bot.send("绑定接口调用失败，请稍后重试。")
         await bot.send("绑定成功，正在获取角色信息...")
-        role_res = await wegame_api.get_role(fw_token)
+        role_res = await wegame_api.get_role(fw_token, user_id)
         # 检查角色信息获取是否成功
         if not role_res or not role_res.get("role"):
             logger.warning(f"[Rocom] 获取角色信息失败，fw_token 可能无效或过期")
@@ -116,7 +116,7 @@ async def rocom_wx_login(bot: Bot, ev: Event):
         if not bind_res or not bind_res.get("binding"):
             return await bot.send("绑定接口调用失败，请稍后重试。")
         await bot.send("绑定成功，正在获取角色信息...")
-        role_res = await wegame_api.get_role(fw_token)
+        role_res = await wegame_api.get_role(fw_token, user_id)
         # 检查角色信息获取是否成功
         if not role_res or not role_res.get("role"):
             logger.warning(f"[Rocom] 获取角色信息失败，fw_token 可能无效或过期")

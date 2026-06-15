@@ -203,13 +203,15 @@ class WegameApi():
             self._client = httpx.AsyncClient(timeout=self.timeout)
         return self._client
     
-    def _rocom_headers(self, fw_token: str) -> Dict[str, str]:
+    def _rocom_headers(self, fw_token: str, user_id: str = "") -> Dict[str, str]:
         """游戏数据查询接口的请求头 (scope=game:rocom)"""
         headers = {
             "X-Framework-Token": fw_token
         }
         if self.wegame_api_key:
             headers["X-API-Key"] = self.wegame_api_key
+        if user_id:
+            headers["X-User-Identifier"] = self._sanitize_uid(user_id)
         return headers
     
     def _wegame_headers(
@@ -432,7 +434,10 @@ class WegameApi():
     # ─── 洛克王国游戏数据 ───
 
     async def get_role(
-        self, fw_token: str, account_type: int | None = None
+        self,
+        fw_token: str,
+        user_id: str = "",
+        account_type: int | None = None,
     ) -> Optional[Dict]:
         """角色资料"""
         params = {}
@@ -441,12 +446,15 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/profile/role",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
 
     async def get_evaluation(
-        self, fw_token: str, account_type: int | None = None
+        self,
+        fw_token: str,
+        user_id: str = "",
+        account_type: int | None = None,
     ) -> Optional[Dict]:
         """AI 维度评价"""
         params = {}
@@ -455,12 +463,15 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/profile/evaluation",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
 
     async def get_pet_summary(
-        self, fw_token: str, account_type: int | None = None
+        self,
+        fw_token: str,
+        user_id: str = "",
+        account_type: int | None = None,
     ) -> Optional[Dict]:
         """精灵摘要"""
         params = {}
@@ -469,12 +480,15 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/profile/pet-summary",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
 
     async def get_collection(
-        self, fw_token: str, account_type: int | None = None
+        self,
+        fw_token: str,
+        user_id: str = "",
+        account_type: int | None = None,
     ) -> Optional[Dict]:
         """收藏数据"""
         params = {}
@@ -483,12 +497,15 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/profile/collection",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
 
     async def get_battle_overview(
-        self, fw_token: str, account_type: int | None = None
+        self,
+        fw_token: str,
+        user_id: str = "",
+        account_type: int | None = None,
     ) -> Optional[Dict]:
         """对战总览"""
         params = {}
@@ -497,13 +514,14 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/profile/battle-overview",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
 
     async def get_battle_list(
         self,
         fw_token: str,
+        user_id: str = "",
         page_size: int = 4,
         after_time: str = "",
         zone: int | None = None,
@@ -517,13 +535,14 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/battle/list",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params=params,
         )
     
     async def get_pets(
         self,
         fw_token: str,
+        user_id: str = "",
         pet_subset: int = 0,
         page_no: int = 1,
         page_size: int = 10,
@@ -540,7 +559,7 @@ class WegameApi():
         return await self._request(
             "GET",
             "/api/v1/games/rocom/battle/pets",
-            self._rocom_headers(fw_token),
+            self._rocom_headers(fw_token, user_id),
             params,
         )
     

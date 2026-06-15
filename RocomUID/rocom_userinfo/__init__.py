@@ -23,13 +23,14 @@ sv_user_info = SV('rc用户信息查询', priority=5)
 async def get_my_user_info_wegame(bot: Bot, ev: Event):
     if wegame_api_key == '':
         return await bot.send("未设置wegame_api_key，请联系机器人管理员设置后再次查询")
-    fw_token = await RocomUser.select_rocom_fw_token(ev.user_id, ev.bot_self_id)
+    user_id = ev.user_id
+    fw_token = await RocomUser.select_rocom_fw_token(user_id, ev.bot_self_id)
     if not fw_token:
         return await bot.send(f"没有获取到您的登录状态，请输入{P}QQ登录/{P}WX登录，进行绑定后再查询")
     await bot.send("正在获取洛克王国数据...")
-    role_task = wegame_api.get_role(fw_token)
-    coll_task = wegame_api.get_collection(fw_token)
-    battle_overview_task = wegame_api.get_battle_overview(fw_token)
+    role_task = wegame_api.get_role(fw_token, user_id)
+    coll_task = wegame_api.get_collection(fw_token, user_id)
+    battle_overview_task = wegame_api.get_battle_overview(fw_token, user_id)
     results = await asyncio.gather(role_task, coll_task, battle_overview_task, return_exceptions=True)
     role_res, coll_res, bo_res = results
     #print(results)
@@ -68,7 +69,7 @@ async def get_my_user_info_wegame(bot: Bot, ev: Event):
     pets_list = []
     #获取异色数据
     if coll_res.get("shiny_sprite_count", 0) > 0:
-        pet_res = await wegame_api.get_pets(fw_token, pet_subset=2, page_no=1, page_size=coll_res.get("shiny_sprite_count", 0))
+        pet_res = await wegame_api.get_pets(fw_token, user_id, pet_subset=2, page_no=1, page_size=coll_res.get("shiny_sprite_count", 0))
         for pet in pet_res.get("pets", []):
             element_list = []
             for t in pet.get("pet_types_info", []):
@@ -89,7 +90,7 @@ async def get_my_user_info_wegame(bot: Bot, ev: Event):
             })
     #获取炫彩数据
     if coll_res.get("colorful_sprite_count", 0) > 0:
-        pet_res = await wegame_api.get_pets(fw_token, pet_subset=3, page_no=1, page_size=coll_res.get("colorful_sprite_count", 0))
+        pet_res = await wegame_api.get_pets(fw_token, user_id, pet_subset=3, page_no=1, page_size=coll_res.get("colorful_sprite_count", 0))
         for pet in pet_res.get("pets", []):
             if pet.get("pet_mutation", 0) not in [1,9]:
                 element_list = []
@@ -224,4 +225,3 @@ async def send_link_uid_msg(bot: Bot, ev: Event):
             -3: "❌你输入了错误的格式!",
         },
     )
-
