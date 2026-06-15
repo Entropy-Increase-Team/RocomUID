@@ -70,26 +70,26 @@ async def draw_user_info(ev, uid, userinfo, petinfo):
         char_pic = await draw_pic_with_ring(char_pic, 152, None, False)
     else:
         char_pic = Image.open(TEXT_PATH / 'img_head.png')
-    img.paste(char_pic, (31, 28), char_pic)
+    img.paste(char_pic, (31, 18), char_pic)
     
     img_draw = ImageDraw.Draw(img)
     #写昵称与uid
     img_draw.text(
-        (200, 65),
+        (200, 55),
         f'{userinfo.basic.nickname}',
         (255, 255, 255),
         rc_font_44,
         'lm',
     )
     img_draw.text(
-        (200, 110),
+        (200, 100),
         f'Lv {userinfo.basic.level}',
         (255, 255, 255),
         rc_font_42,
         'lm',
     )
     img_draw.text(
-        (200, 155),
+        (200, 145),
         f'学号 {uid}',
         (255, 255, 255),
         rc_font_42,
@@ -275,26 +275,26 @@ async def draw_user_info_wegame(ev, date):
         char_pic = await draw_pic_with_ring(char_pic, 152, None, False)
     else:
         char_pic = Image.open(TEXT_PATH / 'img_head.png')
-    img.paste(char_pic, (31, 28), char_pic)
+    img.paste(char_pic, (31, 18), char_pic)
     
     img_draw = ImageDraw.Draw(img)
     #写昵称与uid
     img_draw.text(
-        (200, 65),
+        (200, 55),
         f'{date["userName"]}',
         (255, 255, 255),
         rc_font_44,
         'lm',
     )
     img_draw.text(
-        (200, 110),
+        (200, 100),
         f'Lv {date["userLevel"]}',
         (255, 255, 255),
         rc_font_42,
         'lm',
     )
     img_draw.text(
-        (200, 155),
+        (200, 145),
         f'学号 {date["userUid"]}',
         (255, 255, 255),
         rc_font_42,

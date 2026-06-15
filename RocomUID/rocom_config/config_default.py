@@ -33,5 +33,10 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
             "80",
             "90",
         ],
-    )
+    ),
+    "RC_home_use_qq_avatar": GsBoolConfig(
+        "家园信息使用QQ头像",
+        "开启后家园信息头像使用查询者QQ头像；关闭后固定使用默认头像",
+        False,
+    ),
 }

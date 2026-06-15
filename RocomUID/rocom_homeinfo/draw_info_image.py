@@ -14,6 +14,7 @@ from gsuid_core.utils.image.image_tools import (
     draw_pic_with_ring,
     get_qq_avatar,
 )
+from ..rocom_config.rocom_config import RC_CONFIG
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 top_bg = Image.open(TEXT_PATH / 'top_bg.png')
@@ -25,6 +26,13 @@ pet_bg = Image.open(TEXT_PATH / 'pet_bg.png')
 plant_bg = Image.open(TEXT_PATH / 'plant_bg.png')
 footer = Image.open(TEXT_PATH / 'footer.png')
 info_text_color = (66, 66, 66)
+
+def is_config_enabled(config_key: str) -> bool:
+    config_value = RC_CONFIG.get_config(config_key).data
+    if isinstance(config_value, bool):
+        return config_value
+    return str(config_value).lower() in ["true", "1", "yes", "on", "开启"]
+
 
 def format_egg_countdown_text(target_time: int, now_time: int) -> str:
     remaining_seconds = max(0, target_time - now_time)
@@ -58,12 +66,12 @@ async def draw_home_info(ev, uid, home_info):
     img.paste(title_fg, (0, 0), title_fg)
     
     #画头像
-    if ev.sender.get("avatar", '') != '':
+    if is_config_enabled("RC_home_use_qq_avatar") and ev.sender.get("avatar", '') != '':
         char_pic = await get_qq_avatar(avatar_url=ev.sender["avatar"])
         char_pic = await draw_pic_with_ring(char_pic, 152, None, False)
     else:
         char_pic = Image.open(TEXT_PATH / 'img_head.png')
-    img.paste(char_pic, (31, 28), char_pic)
+    img.paste(char_pic, (31, 13), char_pic)
     
     img_draw = ImageDraw.Draw(img)
     img_draw.text(
@@ -177,8 +185,6 @@ async def draw_home_info(ev, uid, home_info):
                 else:
                     egg_status_text = '未生蛋'
                 pet_draw.text(
-                    (name_len, 77),
-                    "已生蛋" if pet_info['have_egg'] else "未生蛋",
                     (name_right, 77),
                     egg_status_text,
                     (255, 255, 255),
