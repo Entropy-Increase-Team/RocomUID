@@ -6,6 +6,27 @@ from .rocom_api import wegame_api
 from .convert import get_plant_info, get_skill_info
 from msgspec import json as msgjson
 
+PET_NAME_MAP_PATH = Path(__file__).parent / "map" / "pet_name_map.json"
+_pet_name_map: Dict[str, Dict[str, object]] = {}
+_pet_name_map_loaded = False
+
+
+def get_pet_name_from_map(pet_id: Union[int, str]) -> Union[str, None]:
+    global _pet_name_map_loaded, _pet_name_map
+
+    if not _pet_name_map_loaded:
+        try:
+            with Path.open(PET_NAME_MAP_PATH, encoding='utf-8') as f:
+                _pet_name_map = json.load(f)
+        except Exception:
+            _pet_name_map = {}
+        _pet_name_map_loaded = True
+
+    pet_info = _pet_name_map.get(str(pet_id), {})
+    pet_name = pet_info.get('name') if isinstance(pet_info, dict) else None
+    return pet_name if isinstance(pet_name, str) and pet_name else None
+
+
 async def api_to_dict_home_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
@@ -32,7 +53,7 @@ async def api_to_dict_home_info(
             continue
         pet_info = {}
         pet_info['pet_id'] = petinfo['home_pet_info']['pet_cfg_id']
-        pet_info['name'] = petinfo['home_pet_info']['name']
+        pet_info['name'] = get_pet_name_from_map(pet_info['pet_id']) or f"未知精灵({pet_info['pet_id']})"
         pet_info['gender'] = petinfo['display_info']['gender']
         pet_info['level'] = petinfo['display_info']['level']
         pet_info['mutation_type'] = petinfo['display_info']['mutation_type']
