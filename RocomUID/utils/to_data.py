@@ -37,14 +37,15 @@ async def api_to_dict_home_info(
     homeinfo = home_data['home_info']
     home_info = {}
     home_info["home_info"] = {}
-    if homeinfo.get('friend_home_brief_info', 0) == 0:
+    friend_home_brief_info = homeinfo.get('friend_home_brief_info') or {}
+    if not isinstance(friend_home_brief_info, dict):
         return "没有获取到该用户的家园信息"
     #保存家园信息
-    home_info["home_info"]['home_name'] = homeinfo['friend_home_brief_info']['home_name']
-    home_info["home_info"]['home_experience'] = homeinfo['friend_home_brief_info']['home_experience']
-    home_info["home_info"]['home_level'] = homeinfo['friend_home_brief_info']['home_level']
-    home_info["home_info"]['room_level'] = homeinfo['friend_home_brief_info']['room_level']
-    home_info["home_info"]['home_comfort_level'] = homeinfo['friend_home_brief_info']['home_comfort_level']
+    home_info["home_info"]['home_name'] = friend_home_brief_info.get('home_name') or '未命名家园'
+    home_info["home_info"]['home_experience'] = friend_home_brief_info.get('home_experience', 0)
+    home_info["home_info"]['home_level'] = friend_home_brief_info.get('home_level', 0)
+    home_info["home_info"]['room_level'] = friend_home_brief_info.get('room_level', 0)
+    home_info["home_info"]['home_comfort_level'] = friend_home_brief_info.get('home_comfort_level', 0)
     #保存精灵信息
     home_info["home_info"]["home_pets"] = []
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']
