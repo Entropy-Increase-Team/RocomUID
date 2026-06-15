@@ -26,6 +26,19 @@ plant_bg = Image.open(TEXT_PATH / 'plant_bg.png')
 footer = Image.open(TEXT_PATH / 'footer.png')
 info_text_color = (66, 66, 66)
 
+def format_egg_countdown_text(target_time: int, now_time: int) -> str:
+    remaining_seconds = max(0, target_time - now_time)
+    days = remaining_seconds // 86400
+    hours = (remaining_seconds % 86400) // 3600
+    minutes = (remaining_seconds % 3600) // 60
+    seconds = remaining_seconds % 60
+
+    if remaining_seconds < 60:
+        return f'{seconds}秒'
+
+    day_mes = f'{days}天' if days > 0 else ''
+    return f'{day_mes}{hours}时{minutes}分'
+
 async def draw_home_info(ev, uid, home_info):
     bg_height = 460
     pet_list_height = math.ceil(len(home_info['home_pets']) / 2) * 192
@@ -153,11 +166,21 @@ async def draw_home_info(ev, uid, home_info):
                 rc_font_35,
                 'lm',
             )
+            predicted_egg_time = int(pet_info.get('predicted_egg_time') or 0)
+            has_predicted_egg_time = pet_info['gender'] == 2 and predicted_egg_time > now_time
             if pet_info['gender'] == 2:
-                name_len = len(pet_info["name"]) * 40 + 15 + 166
+                name_right = pet_draw.textbbox((166, 75), f'{pet_info["name"]}', font=rc_font_35, anchor='lm')[2] + 15
+                if pet_info['have_egg']:
+                    egg_status_text = '已生蛋'
+                elif has_predicted_egg_time:
+                    egg_status_text = format_egg_countdown_text(predicted_egg_time, now_time)
+                else:
+                    egg_status_text = '未生蛋'
                 pet_draw.text(
                     (name_len, 77),
                     "已生蛋" if pet_info['have_egg'] else "未生蛋",
+                    (name_right, 77),
+                    egg_status_text,
                     (255, 255, 255),
                     rc_font_30,
                     'lm',
