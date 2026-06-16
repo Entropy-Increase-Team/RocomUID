@@ -65,6 +65,7 @@ async def api_to_dict_home_info(
             pet_info["time_cost"] = 0
             pet_info['pet_rip_time'] = 0
         pet_info['have_egg'] = petinfo['have_egg']
+        pet_info['predicted_egg_time'] = petinfo.get('predicted_egg_time', 0)
         home_info["home_info"]["home_pets"].append(pet_info)
     
     #保存种植信息
@@ -203,4 +204,3 @@ async def api_to_dict_pet_info(
         with Path.open(path / "pet_info.json", "wb") as file:
             _ = file.write(msgjson.format(msgjson.encode(pet_info), indent=4))
     return pet_info["pets_list"]
-        

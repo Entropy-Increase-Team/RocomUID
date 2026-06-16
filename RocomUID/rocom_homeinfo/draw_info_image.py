@@ -4,7 +4,7 @@ from pathlib import Path
 import pytz
 import time
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageChops
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH
@@ -46,6 +46,19 @@ def format_egg_countdown_text(target_time: int, now_time: int) -> str:
 
     day_mes = f'{days}天' if days > 0 else ''
     return f'{day_mes}{hours}时{minutes}分'
+
+def format_egg_time_text(target_time: int, now_time: int) -> str:
+    target_dt = datetime.fromtimestamp(target_time)
+    now_dt = datetime.fromtimestamp(now_time)
+    if target_dt.date() == now_dt.date():
+        day_mes = ''
+    elif target_dt.date() == (now_dt + timedelta(days=1)).date():
+        day_mes = '明天'
+    elif target_dt.date() == (now_dt + timedelta(days=2)).date():
+        day_mes = '后天'
+    else:
+        day_mes = f'{target_dt.month}月{target_dt.day}日'
+    return f'{day_mes}{target_dt.hour}点{target_dt.minute}分'
 
 async def draw_home_info(ev, uid, home_info):
     bg_height = 460
@@ -176,6 +189,8 @@ async def draw_home_info(ev, uid, home_info):
             )
             predicted_egg_time = int(pet_info.get('predicted_egg_time') or 0)
             has_predicted_egg_time = pet_info['gender'] == 2 and predicted_egg_time > now_time
+            pet_status_y = 136 if has_predicted_egg_time else 109
+            progress_bar_y = 159 if has_predicted_egg_time else 132
             if pet_info['gender'] == 2:
                 name_right = pet_draw.textbbox((166, 75), f'{pet_info["name"]}', font=rc_font_35, anchor='lm')[2] + 15
                 if pet_info['have_egg']:
@@ -191,14 +206,22 @@ async def draw_home_info(ev, uid, home_info):
                     rc_font_30,
                     'lm',
                 )
+                if has_predicted_egg_time:
+                    pet_draw.text(
+                        (166, 108),
+                        f'预计生蛋：{format_egg_time_text(predicted_egg_time, now_time)}',
+                        (255, 255, 255),
+                        rc_font_22,
+                        'lm',
+                    )
             
             if pet_info['pet_rip_time'] != 0:
                 pet_rip_time = pet_info['pet_rip_time']
                 jindu_tc = Image.open(TEXT_PATH / 'jindu_tc.png').convert('RGBA').resize((270, 13))
-                pet_img.paste(jindu_tc, (166, 132), jindu_tc)
+                pet_img.paste(jindu_tc, (166, progress_bar_y), jindu_tc)
                 if now_time >= pet_rip_time:
                     pet_draw.text(
-                        (166, 109),
+                        (166, pet_status_y),
                         f'灵感已收集完成',
                         (255, 255, 255),
                         rc_font_28,
@@ -218,7 +241,7 @@ async def draw_home_info(ev, uid, home_info):
                     hours = delta.seconds // 3600
                     minutes = (delta.seconds % 3600) // 60
                     pet_draw.text(
-                        (166, 109),
+                        (166, pet_status_y),
                         f'{day_mes}{hours}时{minutes}分',
                         (255, 255, 255),
                         rc_font_28,
@@ -227,10 +250,10 @@ async def draw_home_info(ev, uid, home_info):
                     jindu_zhanbi = (pet_info['time_cost'] - (pet_rip_time - now_time)) / pet_info['time_cost']
                     jindu_len = max(5, int(269 * jindu_zhanbi) + 1)
                 jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
-                pet_img.paste(jindu_bar, (166, 132), jindu_bar)
+                pet_img.paste(jindu_bar, (166, progress_bar_y), jindu_bar)
             else:
                 pet_draw.text(
-                    (166, 109),
+                    (166, pet_status_y),
                     f'未喂食',
                     (255, 255, 255),
                     rc_font_28,
