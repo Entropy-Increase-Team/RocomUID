@@ -32,7 +32,7 @@ async def api_to_dict_home_info(
             continue
         pet_info = {}
         pet_info['pet_id'] = petinfo['home_pet_info']['pet_cfg_id']
-        pet_info['name'] = petinfo['home_pet_info']['name']
+        pet_info['name'] = petinfo['home_pet_info'].get('name','')
         pet_info['gender'] = petinfo['display_info']['gender']
         pet_info['level'] = petinfo['display_info']['level']
         pet_info['mutation_type'] = petinfo['display_info']['mutation_type']
@@ -125,11 +125,12 @@ async def api_to_dict_pet_info(
                     pet_skill_equip.append(skill_info)
             if item["type"] == 2:
                 pet_feature = await get_skill_info(item["id"])
+                pet_feature['id'] = item["id"]
             
         
         pet_info["pets_list"][pet_gid] = {
             "pet_id" : petinfo['display_info']['base_conf_id'],#宠物ID
-            "name" : petinfo['display_info']['name'],#宠物昵称
+            "name" : petinfo['display_info'].get('name',''),#宠物昵称
             "level" : petinfo['display_info']['level'],#宠物等级
             "gender" : petinfo['display_info']['gender'],#宠物性别
             "energy" : petinfo['display_info']['energy'],#宠物性别
