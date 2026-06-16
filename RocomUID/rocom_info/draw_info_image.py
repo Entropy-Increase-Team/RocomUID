@@ -331,9 +331,9 @@ async def draw_rocom_info(rocom_info):
         'lm',
     )
     start_height += 70
-    tx_icon = ROCOM_CHARACTER_PATH / f'{txname}.png'
+    tx_icon = ROCOM_CHARACTER_PATH / f'{rocom_info["feature"].get("id","200191")}.png'
     if not os.path.exists(tx_icon):
-        tx_icon = ROCOM_CHARACTER_PATH / '最好的伙伴.png'
+        tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
     tx_img = Image.open(tx_icon).convert('RGBA').resize((121, 121))
     img.paste(tx_img, (90, start_height), skill_mask)
     start_height += 20
@@ -377,9 +377,9 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["name"]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'抓挠.png'
+                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
             skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
@@ -424,9 +424,9 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["name"]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'抓挠.png'
+                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
             skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
@@ -473,9 +473,9 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["name"]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'抓挠.png'
+                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
             skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)

@@ -10,7 +10,7 @@ from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
 from ..utils.fonts.rocom_fonts import rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, rc_font_22, rc_font_28, rc_font_44, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
-from ..utils.convert import get_pet_info
+from ..utils.convert import get_pet_info, get_skill_info
 from ..utils.error_reply import prefix
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -269,9 +269,9 @@ async def draw_pet_info(uid, pet_data):
         'lm',
     )
     start_height += 70
-    tx_icon = ROCOM_CHARACTER_PATH / f'{txname}.png'
+    tx_icon = ROCOM_CHARACTER_PATH / f"{pet_data['feature']['id']}.png"
     if not os.path.exists(tx_icon):
-        tx_icon = ROCOM_CHARACTER_PATH / '最好的伙伴.png'
+        tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
     tx_img = Image.open(tx_icon).convert('RGBA').resize((121, 121))
     img.paste(tx_img, (90, start_height), skill_mask)
     start_height += 20
@@ -313,14 +313,15 @@ async def draw_pet_info(uid, pet_data):
             jn_y = math.floor(shul / 2)
             jn_x = shul - (2 * jn_y)
             jineng = skill['name']
+            info_skill = await get_skill_info(skill["id"])
             jineng_img = Image.new(
-                'RGBA', (520, 220), SHUX_SKILLLIST_DRAW[skill_list[jineng][0]]
+                'RGBA', (520, 220), SHUX_SKILLLIST_DRAW[info_skill['families']]
             )
-            skill_image = Image.open(ROCOM_SKILL_PATH / f'{jineng}.png').convert('RGBA').resize((158, 158))
+            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill['iconid']}.png").convert('RGBA').resize((158, 158))
             jineng_temp = Image.new('RGBA', (520, 220))
             jineng_temp.paste(jineng_img, (0, 0), bg_skill)
             jineng_temp.paste(skill_image, (35, 32), skill_image)
-            sx_image = Image.open(TEXT_PATH / '属性' / f'{skill_list[jineng][0]}.png').convert('RGBA').resize((75, 75))
+            sx_image = Image.open(TEXT_PATH / '属性' / f"{info_skill['families']}.png").convert('RGBA').resize((75, 75))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -333,18 +334,18 @@ async def draw_pet_info(uid, pet_data):
             jineng_temp.paste(star_cost, (270, 127), star_cost)
             jineng_draw.text(
                 (220, 150),
-                f'{skill_list[jineng][1]}',
+                f"{info_skill['cost']}",
                 (255, 255, 255),
                 skill_font_42,
                 'lm',
             )
-            jineng_draw.text(
-                (350, 150),
-                f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
-                (255, 255, 255),
-                skill_font_42,
-                'lm',
-            )
+            # jineng_draw.text(
+                # (350, 150),
+                # f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
+                # (255, 255, 255),
+                # skill_font_42,
+                # 'lm',
+            # )
             img.paste(
                 jineng_temp, (516 * jn_x + 82, jn_y * 220 + start_height), jineng_temp
             )
@@ -365,14 +366,15 @@ async def draw_pet_info(uid, pet_data):
             jineng = skill['name']
             jn_y = math.floor(shul / 5)
             jn_x = shul - (5 * jn_y)
+            info_skill = await get_skill_info(skill["id"])
             jineng_img = Image.new(
-                'RGBA', (207, 99), SHUX_SKILLLIST_DRAW[skill_list[jineng][0]]
+                'RGBA', (207, 99), SHUX_SKILLLIST_DRAW[info_skill['families']]
             )
-            skill_image = Image.open(ROCOM_SKILL_PATH / f'{jineng}.png').convert('RGBA').resize((67, 67))
+            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill['iconid']}.png").convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
-            sx_image = Image.open(TEXT_PATH / '属性' / f'{skill_list[jineng][0]}.png').convert('RGBA').resize((45, 45))
+            sx_image = Image.open(TEXT_PATH / '属性' / f"{info_skill['families']}.png").convert('RGBA').resize((45, 45))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -385,18 +387,18 @@ async def draw_pet_info(uid, pet_data):
             jineng_temp.paste(cost_star, (120, 52), cost_star)
             jineng_draw.text(
                 (94, 65),
-                f'{skill_list[jineng][1]}',
+                f"{info_skill['cost']}",
                 (255, 255, 255),
                 skill_font_22,
                 'lm',
             )
-            jineng_draw.text(
-                (150, 65),
-                f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
-                (255, 255, 255),
-                skill_font_22,
-                'lm',
-            )
+            # jineng_draw.text(
+                # (150, 65),
+                # f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
+                # (255, 255, 255),
+                # skill_font_22,
+                # 'lm',
+            # )
             img.paste(
                 jineng_temp, (208 * jn_x + 82, jn_y * 99 + start_height), jineng_temp
             )

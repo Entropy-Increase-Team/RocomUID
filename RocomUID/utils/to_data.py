@@ -139,6 +139,7 @@ async def api_to_dict_pet_info(
                 skill_info = {
                     "id" : item["id"], #技能id
                     "name" : info_skill["name"], #技能名称
+                    "iconid" : item.get("iconid", item["id"]), #技能图标id
                     "pos" : item["pos"], #技能位置
                     "is_equipped" : item["is_equipped"], #是否装备技能
                     "use_times" : item["use_times"] #技能释放次数
@@ -148,11 +149,12 @@ async def api_to_dict_pet_info(
                     pet_skill_equip.append(skill_info)
             if item["type"] == 2:
                 pet_feature = await get_skill_info(item["id"])
+                pet_feature['id'] = item["id"]
             
         
         pet_info["pets_list"][pet_gid] = {
             "pet_id" : petinfo['display_info']['base_conf_id'],#宠物ID
-            "name" : petinfo['display_info']['name'],#宠物昵称
+            "name" : petinfo['display_info'].get('name',''),#宠物昵称
             "level" : petinfo['display_info']['level'],#宠物等级
             "gender" : petinfo['display_info']['gender'],#宠物性别
             "energy" : petinfo['display_info']['energy'],#宠物性别

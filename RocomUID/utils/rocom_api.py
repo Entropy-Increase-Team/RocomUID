@@ -587,7 +587,7 @@ class WegameApi():
             json_data=params,
         )
         
-        print(f'{shopid}:{data}')
+        #print(f'{shopid}:{data}')
         return data
     
     async def get_merchant_info(self, refresh: bool = False):
