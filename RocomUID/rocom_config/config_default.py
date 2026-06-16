@@ -35,8 +35,18 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
         ],
     ),
     "RC_home_use_qq_avatar": GsBoolConfig(
-        "家园信息使用QQ头像",
-        "开启后家园信息头像使用查询者QQ头像；关闭后固定使用默认头像",
+        "家园信息使用用户头像",
+        "开启后家园信息头像使用查询者头像；关闭后固定使用默认头像",
         False,
+    ),
+    "RC_home_cache_enable": GsBoolConfig(
+        "家园信息缓存开关",
+        "开启后家园信息会优先读取本地缓存，缓存超时后重新请求API；关闭后每次查询都请求API",
+        False,
+    ),
+    "RC_home_cache_minutes": GsStrConfig(
+        "家园信息缓存时间（分钟）",
+        "家园信息本地缓存有效时间，超过该时间后重新请求API",
+        "5",
     ),
 }
