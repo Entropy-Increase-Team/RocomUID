@@ -380,7 +380,7 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{str(jineng["id"])[:-1]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
                 jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
@@ -429,7 +429,7 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{str(jineng["id"])[:-1]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
                 jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
@@ -480,7 +480,7 @@ async def draw_rocom_info(rocom_info):
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
             )
-            jineng_icon = ROCOM_SKILL_PATH / f'{str(jineng["id"])[:-1]}.png'
+            jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
                 jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
