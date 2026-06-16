@@ -192,7 +192,8 @@ async def draw_home_info(ev, uid, home_info):
                 'lm',
             )
             predicted_egg_time = int(pet_info.get('predicted_egg_time') or 0)
-            has_predicted_egg_time = pet_info['gender'] == 2 and predicted_egg_time > now_time
+            has_egg_prediction = pet_info['gender'] == 2 and predicted_egg_time > 0
+            has_predicted_egg_time = has_egg_prediction and predicted_egg_time > now_time
             pet_status_y = 136 if has_predicted_egg_time else 109
             progress_bar_y = 159 if has_predicted_egg_time else 132
             if pet_info['gender'] == 2:
@@ -201,6 +202,8 @@ async def draw_home_info(ev, uid, home_info):
                     egg_status_text = '已生蛋'
                 elif has_predicted_egg_time:
                     egg_status_text = format_egg_countdown_text(predicted_egg_time, now_time)
+                elif has_egg_prediction:
+                    egg_status_text = '预计已生蛋'
                 else:
                     egg_status_text = '未生蛋'
                 pet_draw.text(
