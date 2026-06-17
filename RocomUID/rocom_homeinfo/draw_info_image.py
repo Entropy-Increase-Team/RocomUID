@@ -60,12 +60,12 @@ def format_egg_time_text(target_time: int, now_time: int) -> str:
         day_mes = f'{target_dt.month}月{target_dt.day}日'
     return f'{day_mes}{target_dt.hour}点{target_dt.minute}分'
 
-async def draw_home_info(ev, uid, home_info):
+async def draw_home_info(ev, uid, home_info, show_pets: bool = True, show_plants: bool = True):
     bg_height = 460
-    pet_list_height = math.ceil(len(home_info.home_pets) / 2) * 192
+    pet_list_height = math.ceil(len(home_info.home_pets) / 2) * 192 if show_pets else 0
     if pet_list_height > 0:
         bg_height = bg_height + 120 + pet_list_height
-    plant_list_height = math.ceil(len(home_info.home_plants) / 3) * 148
+    plant_list_height = math.ceil(len(home_info.home_plants) / 3) * 148 if show_plants else 0
     if plant_list_height > 0:
         bg_height = bg_height + 120 + plant_list_height
 
@@ -151,11 +151,11 @@ async def draw_home_info(ev, uid, home_info):
     )
     start_height = 417
     now_time = int(time.time())
-    if len(home_info.home_pets) > 0:
+    if show_pets and len(home_info.home_pets) > 0:
         #画精灵信息
         img.paste(rocom_title, (48, start_height), rocom_title)
         img_draw.text(
-            (114, 446),
+            (114, start_height + 29),
             f'精灵信息',
             (255, 255, 255),
             rc_font_28,
@@ -283,7 +283,7 @@ async def draw_home_info(ev, uid, home_info):
 
         start_height += (rc_y + 1) * 192 + 10
 
-    if len(home_info.home_plants) > 0:
+    if show_plants and len(home_info.home_plants) > 0:
         #画种植信息
         img.paste(rocom_title, (48, start_height), rocom_title)
         img_draw.text(

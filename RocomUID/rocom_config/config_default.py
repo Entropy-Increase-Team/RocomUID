@@ -39,6 +39,11 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
         "开启后家园信息头像使用查询者头像；关闭后固定使用默认头像",
         False,
     ),
+    "RC_home_separate_garden": GsBoolConfig(
+        "家园隐藏菜园显示",
+        "开启后家园命令只显示精灵信息；关闭后家园命令精灵和菜园一起显示",
+        False,
+    ),
     "RC_home_cache_enable": GsBoolConfig(
         "家园信息缓存开关",
         "开启后家园信息会优先读取本地缓存，缓存超时后重新请求API；关闭后每次查询都请求API",

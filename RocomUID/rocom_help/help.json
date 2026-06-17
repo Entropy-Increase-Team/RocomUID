@@ -56,6 +56,14 @@
         "need_admin": false
       },
 	  {
+        "name": "菜园",
+        "desc": "菜园",
+        "eg": "菜园[UID]",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      },
+	  {
         "name": "刷新面板",
         "desc": "刷新面板",
         "eg": "刷新面板[UID]",

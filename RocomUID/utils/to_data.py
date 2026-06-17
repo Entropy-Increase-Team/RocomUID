@@ -60,7 +60,7 @@ async def api_to_dict_home_info(
         "home_comfort_level": friend_home_brief_info.get('home_comfort_level', 0),
         "home_pets": [],
         "home_plants": [],
-        "finished_at": home_data["meta"]["finished_at"],
+        "finished_at": int(home_data["meta"]["finished_at"]),
     }
 
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']

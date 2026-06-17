@@ -47,7 +47,7 @@ def load_home_cache(uid: str) -> Any:
         return None
 
     local_home_data = home_data['home_info']
-    local_home_data['finished_at'] = home_data['meta']['finished_at']
+    local_home_data['finished_at'] = int(home_data['meta']['finished_at'])
     return msgspec.convert(local_home_data, type=HomeInfo)
 
 
@@ -60,8 +60,17 @@ async def get_my_home_info(uid: str):
     return await api_to_dict_home_info(uid, PLAYER_PATH)
 
 
-@sv_home_info.on_command(('家园', 'home'))
+@sv_home_info.on_command(('家园', '菜园'))
 async def get_my_home_info_wegame(bot: Bot, ev: Event):
+    command = str(getattr(ev, 'command', '')).strip()
+    if '菜园' in command:
+        await send_home_info(bot, ev, '菜园', False, True)
+    else:
+        show_plants = not is_config_enabled('RC_home_separate_garden')
+        await send_home_info(bot, ev, '家园', True, show_plants)
+
+
+async def send_home_info(bot: Bot, ev: Event, info_name: str, show_pets: bool, show_plants: bool):
     args = ev.text.split()
     if len(args) < 1:
         uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
@@ -71,10 +80,10 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
         uid = args[0]
     if uid and not uid.isdigit():
         return await bot.send('请输入正确的UID格式!')
-    await bot.send(f'正在获取[UID]{uid}的家园信息，请稍后')
+    await bot.send(f'正在获取[UID]{uid}的{info_name}信息，请稍后')
 
     home_info = await get_my_home_info(uid)
     if isinstance(home_info, str):
         return await bot.send(home_info)
-    im = await draw_home_info(ev, uid, home_info)
+    im = await draw_home_info(ev, uid, home_info, show_pets, show_plants)
     await bot.send(im)
