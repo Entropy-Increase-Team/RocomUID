@@ -3,12 +3,14 @@ import time
 from pathlib import Path
 from typing import Any
 
+import msgspec
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..rocom_config.rocom_config import RC_CONFIG
 from ..utils.database.model import RocomUser
+from ..utils.models import HomeInfo
 from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..utils.to_data import api_to_dict_home_info
 from .draw_info_image import draw_home_info
@@ -46,7 +48,7 @@ def load_home_cache(uid: str) -> Any:
 
     local_home_data = home_data['home_info']
     local_home_data['finished_at'] = home_data['meta']['finished_at']
-    return local_home_data
+    return msgspec.convert(local_home_data, type=HomeInfo)
 
 
 async def get_my_home_info(uid: str):

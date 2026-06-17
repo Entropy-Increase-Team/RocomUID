@@ -1,14 +1,26 @@
 from pathlib import Path
 import os
 import json
-from typing import Dict, List, Tuple, Union
+from typing import Dict, Union
+
+import msgspec
+from msgspec import json as msgjson
+
 from .rocom_api import wegame_api
 from .convert import get_plant_info, get_skill_info
-from msgspec import json as msgjson
+from .models import HomeInfo, PetInfoMap, PetPanelInfo
 
 PET_NAME_MAP_PATH = Path(__file__).parent / "map" / "pet_name_map.json"
 _pet_name_map: Dict[str, Dict[str, object]] = {}
 _pet_name_map_loaded = False
+
+
+def convert_home_info(data: Dict) -> HomeInfo:
+    return msgspec.convert(data, type=HomeInfo)
+
+
+def convert_pet_info_map(data: Dict) -> PetInfoMap:
+    return msgspec.convert(data, type=PetInfoMap)
 
 
 def get_pet_name_from_map(pet_id: Union[int, str]) -> Union[str, None]:
@@ -32,89 +44,101 @@ async def api_to_dict_home_info(
     save_path: Union[Path, None] = None,
 ):
     home_data = await wegame_api.get_home_info(uid)
-    if home_data == None:
+    if home_data is None:
         return await wegame_api._get_last_error()
+
     homeinfo = home_data['home_info']
-    home_info = {}
-    home_info["home_info"] = {}
     friend_home_brief_info = homeinfo.get('friend_home_brief_info') or {}
     if not isinstance(friend_home_brief_info, dict):
         return "没有获取到该用户的家园信息"
-    #保存家园信息
-    home_info["home_info"]['home_name'] = friend_home_brief_info.get('home_name') or '未命名家园'
-    home_info["home_info"]['home_experience'] = friend_home_brief_info.get('home_experience', 0)
-    home_info["home_info"]['home_level'] = friend_home_brief_info.get('home_level', 0)
-    home_info["home_info"]['room_level'] = friend_home_brief_info.get('room_level', 0)
-    home_info["home_info"]['home_comfort_level'] = friend_home_brief_info.get('home_comfort_level', 0)
-    #保存精灵信息
-    home_info["home_info"]["home_pets"] = []
+
+    home_info: dict = {
+        "home_name": friend_home_brief_info.get('home_name') or '未命名家园',
+        "home_experience": friend_home_brief_info.get('home_experience', 0),
+        "home_level": friend_home_brief_info.get('home_level', 0),
+        "room_level": friend_home_brief_info.get('room_level', 0),
+        "home_comfort_level": friend_home_brief_info.get('home_comfort_level', 0),
+        "home_pets": [],
+        "home_plants": [],
+        "finished_at": home_data["meta"]["finished_at"],
+    }
+
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']
-    for index, petinfo in enumerate(home_pets):
+    for petinfo in home_pets:
         if petinfo['home_pet_info']['pet_cfg_id'] == 0:
             continue
-        pet_info = {}
-        pet_info['pet_id'] = petinfo['home_pet_info']['pet_cfg_id']
-        pet_info['name'] = get_pet_name_from_map(pet_info['pet_id']) or f"未知精灵({pet_info['pet_id']})"
-        pet_info['gender'] = petinfo['display_info']['gender']
-        pet_info['level'] = petinfo['display_info']['level']
-        pet_info['mutation_type'] = petinfo['display_info']['mutation_type']
+
+        pet_record = {
+            'pet_id': petinfo['home_pet_info']['pet_cfg_id'],
+            'name': get_pet_name_from_map(petinfo['home_pet_info']['pet_cfg_id'])
+            or f"未知精灵({petinfo['home_pet_info']['pet_cfg_id']})",
+            'gender': petinfo['display_info']['gender'],
+            'level': petinfo['display_info']['level'],
+            'mutation_type': petinfo['display_info']['mutation_type'],
+            'time_cost': 0,
+            'pet_rip_time': 0,
+            'have_egg': petinfo['have_egg'],
+            'predicted_egg_time': petinfo.get('predicted_egg_time', 0),
+        }
+
         if petinfo['home_pet_info'].get('feed_info', 0) != 0:
-            pet_info["time_cost"] = int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)
-            pet_info['pet_rip_time'] = int(petinfo['home_pet_info']['feed_info']['begin_time']/1000000) + int(petinfo['home_pet_info']['feed_info']['time_cost']/1000000)
-        else:
-            pet_info["time_cost"] = 0
-            pet_info['pet_rip_time'] = 0
-        pet_info['have_egg'] = petinfo['have_egg']
-        pet_info['predicted_egg_time'] = petinfo.get('predicted_egg_time', 0)
-        home_info["home_info"]["home_pets"].append(pet_info)
-    
-    #保存种植信息
+            pet_record["time_cost"] = int(petinfo['home_pet_info']['feed_info']['time_cost'] / 1000000)
+            pet_record['pet_rip_time'] = (
+                int(petinfo['home_pet_info']['feed_info']['begin_time'] / 1000000)
+                + int(petinfo['home_pet_info']['feed_info']['time_cost'] / 1000000)
+            )
+
+        home_info["home_pets"].append(pet_record)
+
     home_plants = homeinfo['friend_cell_home_brief_info']['home_plant_info']['home_plant_land_list'][0]['home_plant_list']
-    home_info["home_info"]['home_plants'] = []
-    for index, plantinfo in enumerate(home_plants):
-        plant_info = {}
+    for plantinfo in home_plants:
         if plantinfo['plant_seed_id'] == 0:
             continue
-        plant_info['plant_info'] = await get_plant_info(plantinfo['plant_seed_id'])
-        plant_info['plant_rip_time'] = plantinfo['plant_rip_time']
-        plant_info['plant_tab_id'] = plantinfo['plant_tab_id']
-        home_info["home_info"]['home_plants'].append(plant_info)
-    home_info["meta"] = home_data["meta"]
+
+        plant_record = {
+            'plant_info': await get_plant_info(plantinfo['plant_seed_id']),
+            'plant_rip_time': plantinfo['plant_rip_time'],
+            'plant_tab_id': plantinfo['plant_tab_id'],
+        }
+        home_info['home_plants'].append(plant_record)
+
+    home_model = convert_home_info(home_info)
+
     if save_path and uid:
         path = save_path / uid
         path.mkdir(parents=True, exist_ok=True)
         with Path.open(path / "home_info.json", "wb") as file:
-            _ = file.write(msgjson.format(msgjson.encode(home_info), indent=4))
-    home_return_date = {}
-    home_return_date = home_info["home_info"]
-    home_return_date['finished_at'] = home_info['meta']["finished_at"]
-    return home_return_date
+            _ = file.write(msgjson.format(msgjson.encode(msgspec.to_builtins(home_model)), indent=4))
+
+    return home_model
+
 
 async def api_to_dict_pet_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
 ):
     home_data = await wegame_api.get_home_info(uid)
-    if home_data == None:
+    if home_data is None:
         return await wegame_api._get_last_error()
-    pet_info_path = save_path / uid / 'pet_info.json'
-    local_pet_info = {}
-    if os.path.exists(pet_info_path):
+
+    pet_info_path = save_path / uid / 'pet_info.json' if save_path and uid else None
+    local_pet_info: Dict[str, object] = {}
+    if pet_info_path and os.path.exists(pet_info_path):
         with Path.open(pet_info_path, encoding='utf-8') as f:
             local_pet_info = json.load(f)
+
     homeinfo = home_data['home_info']
     pet_info = local_pet_info
     if pet_info.get('pets_list', 0) == 0:
         pet_info['pets_list'] = {}
-    #保存精灵信息
+
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']
-    for index, petinfo in enumerate(home_pets):
-        #过滤无详细数据的护卫精灵
+    for petinfo in home_pets:
         if petinfo['home_pet_info']['pet_cfg_id'] == 0:
             continue
-        #保存基础数据
-        #已宠物实例id来记录宠物数据
+
         pet_gid = str(petinfo['home_pet_info']['pet_gid'])
+        pethp = petatk = petspatk = petdef = petspdef = petspd = 0
         for item in petinfo['display_info']['attribute_new_info']['addi_attr_data']:
             if item['type'] == 1:
                 pethp = item['addi_attr']
@@ -128,21 +152,20 @@ async def api_to_dict_pet_info(
                 petspdef = item['addi_attr']
             if item['type'] == 6:
                 petspd = item['addi_attr']
-        
+
         pet_skill = []
         pet_skill_equip = []
         pet_feature = {}
         for item in petinfo['display_info']['skill']['skill_data']:
-            #保存可释放技能
             if item["type"] == 1:
                 info_skill = await get_skill_info(item["id"])
                 skill_info = {
-                    "id" : item["id"], #技能id
-                    "name" : info_skill["name"], #技能名称
-                    "iconid" : item.get("iconid", item["id"]), #技能图标id
-                    "pos" : item["pos"], #技能位置
-                    "is_equipped" : item["is_equipped"], #是否装备技能
-                    "use_times" : item["use_times"] #技能释放次数
+                    "id": item["id"],
+                    "name": info_skill["name"],
+                    "iconid": item.get("iconid", item["id"]),
+                    "pos": item["pos"],
+                    "is_equipped": item["is_equipped"],
+                    "use_times": item["use_times"],
                 }
                 pet_skill.append(skill_info)
                 if item["is_equipped"]:
@@ -150,59 +173,62 @@ async def api_to_dict_pet_info(
             if item["type"] == 2:
                 pet_feature = await get_skill_info(item["id"])
                 pet_feature['id'] = item["id"]
-            
-        
-        pet_info["pets_list"][pet_gid] = {
-            "pet_id" : petinfo['display_info']['base_conf_id'],#宠物ID
-            "name" : petinfo['display_info'].get('name',''),#宠物昵称
-            "level" : petinfo['display_info']['level'],#宠物等级
-            "gender" : petinfo['display_info']['gender'],#宠物性别
-            "energy" : petinfo['display_info']['energy'],#宠物性别
-            "mutation_type" : petinfo['display_info']['mutation_type'],#宠物稀有类型
-            "blood_id" : petinfo['display_info']['blood_id'],#宠物血脉属性
-            "nature" : petinfo['display_info']['nature'],#宠物性格
-            "attribute_info":{
-                "pethp":{
-                    "value" : pethp, #生命值
-                    "talent" : petinfo['display_info']['attribute_info']["hp"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["hp"]["effort_add"], #成长值
+
+        pet_model = {
+            "pet_id": petinfo['display_info']['base_conf_id'],
+            "name": petinfo['display_info'].get('name', ''),
+            "level": petinfo['display_info']['level'],
+            "gender": petinfo['display_info']['gender'],
+            "energy": petinfo['display_info']['energy'],
+            "mutation_type": petinfo['display_info']['mutation_type'],
+            "blood_id": petinfo['display_info']['blood_id'],
+            "nature": petinfo['display_info']['nature'],
+            "attribute_info": {
+                "pethp": {
+                    "value": pethp,
+                    "talent": petinfo['display_info']['attribute_info']["hp"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']["hp"]["effort_add"],
                 },
-                "petatk":{
-                    "value" : petatk, #物攻
-                    "talent" : petinfo['display_info']['attribute_info']["attack"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["attack"]["effort_add"], #成长值
+                "petatk": {
+                    "value": petatk,
+                    "talent": petinfo['display_info']['attribute_info']["attack"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']["attack"]["effort_add"],
                 },
-                "petspatk":{
-                    "value" : petspatk, #魔攻
-                    "talent" : petinfo['display_info']['attribute_info']["special_attack"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["special_attack"]["effort_add"], #成长值
+                "petspatk": {
+                    "value": petspatk,
+                    "talent": petinfo['display_info']['attribute_info']["special_attack"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']["special_attack"]["effort_add"],
                 },
-                "petdef":{
-                    "value" : petdef, #物防
-                    "talent" : petinfo['display_info']['attribute_info']["defense"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["defense"]["effort_add"], #成长值
+                "petdef": {
+                    "value": petdef,
+                    "talent": petinfo['display_info']['attribute_info']["defense"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']["defense"]["effort_add"],
                 },
-                "petspdef":{
-                    "value" : petspdef, #魔防
-                    "talent" : petinfo['display_info']['attribute_info']["special_defense"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["special_defense"]["effort_add"], #成长值
+                "petspdef": {
+                    "value": petspdef,
+                    "talent": petinfo['display_info']['attribute_info']["special_defense"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']["special_defense"]["effort_add"],
                 },
-                "petspd":{
-                    "value" : petspd, #速度
-                    "talent" : petinfo['display_info']['attribute_info']["speed"]["talent"], #个体值
-                    "effort_add" : petinfo['display_info']['attribute_info']["speed"]["effort_add"], #成长值
-                }
+                "petspd": {
+                    "value": petspd,
+                    "talent": petinfo['display_info']['attribute_info']["speed"]["talent"],
+                    "effort_add": petinfo['display_info']['attribute_info']['speed']['effort_add'],
+                },
             },
-            "equip_skills": pet_skill_equip, #已装备技能信息
-            "skills": pet_skill, #技能信息
-            "feature" : pet_feature, #特性信息
-            "glass_info" : petinfo['display_info']['glass_info'],#宠物稀有类型
+            "equip_skills": pet_skill_equip,
+            "skills": pet_skill,
+            "feature": pet_feature,
+            "glass_info": petinfo['display_info']['glass_info'],
         }
-        
-    pet_info["meta"] = home_data["meta"]
+
+        pet_info["pets_list"][pet_gid] = msgspec.to_builtins(
+            msgspec.convert(pet_model, type=PetPanelInfo)
+        )
+
     if save_path and uid:
         path = save_path / uid
         path.mkdir(parents=True, exist_ok=True)
         with Path.open(path / "pet_info.json", "wb") as file:
-            _ = file.write(msgjson.format(msgjson.encode(pet_info), indent=4))
-    return pet_info["pets_list"]
+            _ = file.write(msgjson.format(msgjson.encode(msgspec.to_builtins(pet_info)), indent=4))
+
+    return convert_pet_info_map(pet_info["pets_list"])

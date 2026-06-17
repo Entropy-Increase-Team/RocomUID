@@ -16,7 +16,7 @@ from ..utils.database.model import RocomUser
 from gsuid_core.subscribe import gs_subscribe
 from gsuid_core.aps import scheduler
 from ..utils.error_reply import prefix as P
-from ..utils.to_data import api_to_dict_pet_info
+from ..utils.to_data import api_to_dict_pet_info, convert_pet_info_map
 from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..rocom_config.rocom_config import RC_CONFIG
 from .draw_info_image import draw_pet_list,draw_pet_info
@@ -30,7 +30,7 @@ async def get_my_pet_info_data(uid, refresh: bool = False):
         if os.path.exists(home_info_path):
             with Path.open(home_info_path, encoding='utf-8') as f:
                 pet_data = json.load(f)
-                return pet_data["pets_list"]
+                return convert_pet_info_map(pet_data["pets_list"])
     pet_data = await api_to_dict_pet_info(uid, PLAYER_PATH)
     return pet_data
 
@@ -59,7 +59,7 @@ async def get_my_pet_list(uid, pet_find_id, pet_find_name):
     if os.path.exists(home_info_path):
         with Path.open(home_info_path, encoding='utf-8') as f:
             pet_data = json.load(f)
-            pet_list = pet_data["pets_list"]
+            pet_list = convert_pet_info_map(pet_data["pets_list"])
     
     pet_id_list = {}
     if len(pet_list.keys()) > 0:
@@ -69,7 +69,7 @@ async def get_my_pet_list(uid, pet_find_id, pet_find_name):
                 #查找到唯一gid直接返回数据
                 return {gid:pet_list[gid]}
             #查找同名精灵保存对应的gid以供用户选择
-            if pet_find_name != '' and pet_list[gid]['name'] == pet_find_name:
+            if pet_find_name != '' and pet_list[gid].name == pet_find_name:
                 pet_id_list[gid] = pet_list[gid]
         
     #本地缓存未找到，获取服务器数据并刷新
@@ -83,7 +83,7 @@ async def get_my_pet_list(uid, pet_find_id, pet_find_name):
             #查找到唯一gid直接返回数据
             return {gid:pet_list[gid]}
         #查找同名精灵保存对应的gid以供用户选择
-        if pet_find_name != '' and pet_list[gid]['name'] == pet_find_name:
+        if pet_find_name != '' and pet_list[gid].name == pet_find_name:
             pet_id_list[gid] = pet_list[gid]
     
     return pet_id_list
@@ -122,7 +122,7 @@ async def get_my_pet_info(bot: Bot, ev: Event):
         xuanze_list = list(find_pet_list.keys())
         mes = ''
         for gid in find_pet_list:
-            mes += f"\n{shul}·{find_pet_list[gid]['name']}({gid}) Lv.{find_pet_list[gid]['level']}"
+            mes += f"\n{shul}·{find_pet_list[gid].name}({gid}) Lv.{find_pet_list[gid].level}"
             xiabiao_list.append(str(shul))
             shul = shul + 1
         

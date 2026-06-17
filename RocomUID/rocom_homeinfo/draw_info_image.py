@@ -62,22 +62,22 @@ def format_egg_time_text(target_time: int, now_time: int) -> str:
 
 async def draw_home_info(ev, uid, home_info):
     bg_height = 460
-    pet_list_height = math.ceil(len(home_info['home_pets']) / 2) * 192
+    pet_list_height = math.ceil(len(home_info.home_pets) / 2) * 192
     if pet_list_height > 0:
         bg_height = bg_height + 120 + pet_list_height
-    plant_list_height = math.ceil(len(home_info['home_plants']) / 3) * 148
+    plant_list_height = math.ceil(len(home_info.home_plants) / 3) * 148
     if plant_list_height > 0:
         bg_height = bg_height + 120 + plant_list_height
-    
+
     img = Image.open(TEXT_PATH / 'bg.jpg').convert('RGB')
     if bg_height > 2417:
         img = img.resize((1000, bg_height))
     else:
         img = img.crop((0, 0, 1000, bg_height))
-    
+
     img.paste(top_bg, (0, 0), top_bg)
     img.paste(title_fg, (0, 0), title_fg)
-    
+
     #画头像
     if is_config_enabled("RC_home_use_qq_avatar"):
         if ev.sender.get("avatar", '') != '':
@@ -89,11 +89,11 @@ async def draw_home_info(ev, uid, home_info):
     else:
         char_pic = Image.open(TEXT_PATH / 'img_head.png')
         img.paste(char_pic, (31, 13), char_pic)
-    
+
     img_draw = ImageDraw.Draw(img)
     img_draw.text(
         (200, 110),
-        f"{home_info['home_name']}的小屋",
+        f"{home_info.home_name}的小屋",
         (255, 255, 255),
         skill_font_46,
         'lm',
@@ -105,27 +105,27 @@ async def draw_home_info(ev, uid, home_info):
         skill_font_38,
         'lm',
     )
-    
+
     #画家园信息
     img.paste(banner_bg, (0, 228), banner_bg)
     img_draw.text(
         (219, 282),
-        f"{home_info['room_level']}",
+        f"{home_info.room_level}",
         (0, 0, 0),
         skill_font_42,
         'mm',
     )
-    
+
     img_draw.text(
         (407, 282),
-        f"{home_info['home_level']}",
+        f"{home_info.home_level}",
         (0, 0, 0),
         skill_font_42,
         'mm',
     )
-    
-    if home_info['home_experience'] > 100000:
-        home_experience = round(home_info['home_experience'] / 10000, 2)
+
+    if home_info.home_experience > 100000:
+        home_experience = round(home_info.home_experience / 10000, 2)
         img_draw.text(
             (596, 282),
             f'{home_experience}w',
@@ -136,22 +136,22 @@ async def draw_home_info(ev, uid, home_info):
     else:
         img_draw.text(
             (596, 282),
-            f"{home_info['home_experience']}",
+            f"{home_info.home_experience}",
             (0, 0, 0),
             skill_font_42,
             'mm',
         )
-    
+
     img_draw.text(
         (786, 282),
-        f"{home_info['home_comfort_level']}",
+        f"{home_info.home_comfort_level}",
         (0, 0, 0),
         skill_font_42,
         'mm',
     )
     start_height = 417
     now_time = int(time.time())
-    if len(home_info['home_pets']) > 0:
+    if len(home_info.home_pets) > 0:
         #画精灵信息
         img.paste(rocom_title, (48, start_height), rocom_title)
         img_draw.text(
@@ -163,42 +163,42 @@ async def draw_home_info(ev, uid, home_info):
         )
         start_height += 80
         #18 484
-        for shul, pet_info in enumerate(home_info["home_pets"]):
+        for shul, pet_info in enumerate(home_info.home_pets):
             rc_y = math.floor(shul / 2)
             rc_x = shul - (2 * rc_y)
             pet_img = Image.new('RGBA', (486, 192), (255, 255, 255, 0))
             pet_bg_img = Image.new('RGBA', (486, 192), (110, 171, 32))
             pet_img.paste(pet_bg, (0, 0), pet_bg)
-            
-            if pet_info['mutation_type'] in [9, 1]:
-                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png'
+
+            if pet_info.mutation_type in [9, 1]:
+                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info.pet_id}_1.png'
             else:
-                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png'
+                pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info.pet_id}.png'
             if not os.path.exists(pet_head_icon):
                 pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
             head_img = Image.open(pet_head_icon).convert('RGBA').resize((130, 130))
             pet_img.paste(head_img, (24, 28), head_img)
-            
-            if pet_info['mutation_type'] in [1,8,9]:
-                star_img = Image.open(TEXT_PATH / f'star_{pet_info["mutation_type"]}.png').convert('RGBA').resize((70, 70))
+
+            if pet_info.mutation_type in [1, 8, 9]:
+                star_img = Image.open(TEXT_PATH / f'star_{pet_info.mutation_type}.png').convert('RGBA').resize((70, 70))
                 pet_img.paste(star_img, (21, 8), star_img)
-            
+
             pet_draw = ImageDraw.Draw(pet_img)
             pet_draw.text(
                 (166, 75),
-                f'{pet_info["name"]}',
+                f'{pet_info.name}',
                 (255, 255, 0),
                 rc_font_35,
                 'lm',
             )
-            predicted_egg_time = int(pet_info.get('predicted_egg_time') or 0)
-            has_egg_prediction = pet_info['gender'] == 2 and predicted_egg_time > 0
+            predicted_egg_time = int(getattr(pet_info, 'predicted_egg_time', 0) or 0)
+            has_egg_prediction = pet_info.gender == 2 and predicted_egg_time > 0
             has_predicted_egg_time = has_egg_prediction and predicted_egg_time > now_time
             pet_status_y = 136 if has_predicted_egg_time else 109
             progress_bar_y = 159 if has_predicted_egg_time else 132
-            if pet_info['gender'] == 2:
-                name_right = pet_draw.textbbox((166, 75), f'{pet_info["name"]}', font=rc_font_35, anchor='lm')[2] + 15
-                if pet_info['have_egg']:
+            if pet_info.gender == 2:
+                name_right = pet_draw.textbbox((166, 75), f'{pet_info.name}', font=rc_font_35, anchor='lm')[2] + 15
+                if pet_info.have_egg:
                     egg_status_text = '已生蛋'
                 elif has_predicted_egg_time:
                     egg_status_text = format_egg_countdown_text(predicted_egg_time, now_time)
@@ -221,9 +221,9 @@ async def draw_home_info(ev, uid, home_info):
                         rc_font_22,
                         'lm',
                     )
-            
-            if pet_info['pet_rip_time'] != 0:
-                pet_rip_time = pet_info['pet_rip_time']
+
+            if pet_info.pet_rip_time != 0:
+                pet_rip_time = pet_info.pet_rip_time
                 jindu_tc = Image.open(TEXT_PATH / 'jindu_tc.png').convert('RGBA').resize((270, 13))
                 pet_img.paste(jindu_tc, (166, progress_bar_y), jindu_tc)
                 if now_time >= pet_rip_time:
@@ -254,7 +254,7 @@ async def draw_home_info(ev, uid, home_info):
                         rc_font_28,
                         'lm',
                     )
-                    jindu_zhanbi = (pet_info['time_cost'] - (pet_rip_time - now_time)) / pet_info['time_cost']
+                    jindu_zhanbi = (pet_info.time_cost - (pet_rip_time - now_time)) / pet_info.time_cost
                     jindu_len = max(5, int(269 * jindu_zhanbi) + 1)
                 jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
                 pet_img.paste(jindu_bar, (166, progress_bar_y), jindu_bar)
@@ -266,24 +266,24 @@ async def draw_home_info(ev, uid, home_info):
                     rc_font_28,
                     'lm',
                 )
-            
+
             level_img = Image.open(TEXT_PATH / f'level_icon.png').convert('RGBA')
             level_draw = ImageDraw.Draw(level_img)
             level_draw.text(
                 (37, 19),
-                f'Lv{pet_info["level"]}',
+                f'Lv{pet_info.level}',
                 (255, 255, 255),
                 rc_font_22,
                 'mm',
             )
             level_img = level_img.rotate(10, expand=True)
             pet_img.paste(level_img, (62, 125), level_img)
-            
+
             img.paste(pet_img, (486 * rc_x + 18, rc_y * 192 + start_height), pet_img)
-            
+
         start_height += (rc_y + 1) * 192 + 10
-    
-    if len(home_info['home_plants']) > 0:
+
+    if len(home_info.home_plants) > 0:
         #画种植信息
         img.paste(rocom_title, (48, start_height), rocom_title)
         img_draw.text(
@@ -295,11 +295,11 @@ async def draw_home_info(ev, uid, home_info):
         )
         start_height += 80
         #46 1173 1481
-        for shul, plant_info in enumerate(home_info["home_plants"]):
+        for shul, plant_info in enumerate(home_info.home_plants):
             rc_y = math.floor(shul / 3)
             rc_x = shul - (3 * rc_y)
             plant_img = Image.new('RGBA', (306, 148), (255, 255, 255, 0))
-            plant_rip_time = plant_info['plant_rip_time']
+            plant_rip_time = plant_info.plant_rip_time
             plant_draw = ImageDraw.Draw(plant_img)
             if now_time >= plant_rip_time:
                 plant_img.paste(plant_bg, (0, 0), plant_bg)
@@ -327,26 +327,26 @@ async def draw_home_info(ev, uid, home_info):
                     rc_font_26,
                     'lm',
                 )
-                
+
                 jindu_tc = Image.open(TEXT_PATH / 'jindu_tc.png').convert('RGBA').resize((147, 13))
                 plant_img.paste(jindu_tc, (130, 103), jindu_tc)
-                jindu_zhanbi = ((21600 * plant_info['plant_tab_id']) - (plant_rip_time - now_time)) / (21600 * plant_info['plant_tab_id'])
+                jindu_zhanbi = ((21600 * plant_info.plant_tab_id) - (plant_rip_time - now_time)) / (21600 * plant_info.plant_tab_id)
                 jindu_len = max(5, int(146 * jindu_zhanbi) + 1)
                 jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
                 plant_img.paste(jindu_bar, (130, 103), jindu_bar)
-                
-            item_img = Image.open(TEXT_PATH / "home_icon" / f'{plant_info["plant_info"]["iconid"]}_2.png').convert('RGBA').resize((105, 105))
+
+            item_img = Image.open(TEXT_PATH / "home_icon" / f'{plant_info.plant_info.iconid}_2.png').convert('RGBA').resize((105, 105))
             plant_img.paste(item_img, (17, 19), item_img)
             plant_draw.text(
                 (131, 45),
-                f"{plant_info['plant_info']['name']}",
+                f"{plant_info.plant_info.name}",
                 (255, 255, 0),
                 rc_font_35,
                 'lm',
             )
             img.paste(plant_img, (306 * rc_x + 46, rc_y * 148 + start_height), plant_img)
-    
-    dt = datetime.fromtimestamp(int(home_info['finished_at']))
+
+    dt = datetime.fromtimestamp(int(home_info.finished_at))
     img_draw.text(
         (920, bg_height - 80),
         f"数据更新时间：{dt.strftime('%Y-%m-%d %H:%M:%S')}",
@@ -354,7 +354,7 @@ async def draw_home_info(ev, uid, home_info):
         skill_font_24,
         'rm',
     )
-    
-    img.paste(footer, (270, bg_height - 44), footer) 
+
+    img.paste(footer, (270, bg_height - 44), footer)
     res = await convert_img(img)
     return res

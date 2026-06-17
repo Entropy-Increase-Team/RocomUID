@@ -114,17 +114,17 @@ attribute_tag = ['value', 'talent', 'effort_add']
 async def draw_pet_info(uid, pet_data):
     bg_height = 970
     #计算已装备技能占用
-    skill_equip_num = len(pet_data['equip_skills'])
+    skill_equip_num = len(pet_data.equip_skills)
     if skill_equip_num > 0:
         bg_height += math.ceil(skill_equip_num / 2) * 220 + 80
     #计算已学习技能占用
-    skill_num = len(pet_data['skills'])
+    skill_num = len(pet_data.skills)
     if skill_num > 0:
         bg_height += math.ceil(skill_num / 5) * 99 + 80
     #计算特性信息占用
     tx_line_height = 0
-    txname = pet_data['feature']['name']
-    tx_content = pet_data['feature']['desc']
+    txname = pet_data.feature.name
+    tx_content = pet_data.feature.desc
     txname_para = await get_text_line(f'{tx_content}', 28)
     tx_line_height += len(txname_para) * 40
     tx_line_height += 120
@@ -150,13 +150,13 @@ async def draw_pet_info(uid, pet_data):
     
     img_draw.text(
         (600, 260),
-        f'{pet_data["name"]}',
+        f'{pet_data.name}',
         info_text_color,
         rc_font_64,
         'mm',
     )
     
-    pet_base = await get_pet_info(pet_data["pet_id"])
+    pet_base = await get_pet_info(pet_data.pet_id)
     img_draw.text(
         (1050, 280),
         f'UID{uid}',
@@ -168,7 +168,7 @@ async def draw_pet_info(uid, pet_data):
     img.paste(pet_bg_img, (-6, 359), pet_bg_mask)
     # 画形象
     pet_icon_name = pet_base['icon']
-    if pet_data['mutation_type'] in [9, 1]:
+    if pet_data.mutation_type in [9, 1]:
         pet_icon_name = pet_base['icon'] + '_yise'
     pet_head_icon = ROCOM_ICON_PATH / f'{pet_icon_name}.png'
     if not os.path.exists(pet_head_icon):
@@ -185,8 +185,8 @@ async def draw_pet_info(uid, pet_data):
     img.paste(pokemon_img, (0, 371), pokemon_img)
     
     #画稀有类型
-    if pet_data['mutation_type'] in [1,8,9]:
-        star_img = Image.open(TEXT_PATH / f'star_{pet_data["mutation_type"]}.png').convert('RGBA').resize((80, 80))
+    if pet_data.mutation_type in [1, 8, 9]:
+        star_img = Image.open(TEXT_PATH / f'star_{pet_data.mutation_type}.png').convert('RGBA').resize((80, 80))
         img.paste(star_img, (470, 850), star_img)
     
     #画精灵属性
@@ -201,9 +201,17 @@ async def draw_pet_info(uid, pet_data):
     x_num = 730
     y_num = 483
     img.paste(table_img, (550, 405), table_img)
+    attribute_items = [
+        pet_data.attribute_info.pethp,
+        pet_data.attribute_info.petatk,
+        pet_data.attribute_info.petspatk,
+        pet_data.attribute_info.petdef,
+        pet_data.attribute_info.petspdef,
+        pet_data.attribute_info.petspd,
+    ]
     for index_x in range(0, 3):
         x_num = x_num + tag_w_add[index_x]
-        for index_y, sx_item in enumerate(pet_data['attribute_info'].keys()):
+        for index_y, sx_item in enumerate(attribute_items):
             tag_x = x_num
             tag_y = y_num + index_y * 54
             img.paste(tags_img, (tag_x, tag_y), tags_img)
@@ -217,7 +225,7 @@ async def draw_pet_info(uid, pet_data):
                 )
             img_draw.text(
                 (tag_x + 58, tag_y + 22),
-                f"{pet_data['attribute_info'][sx_item][attribute_tag[index_x]]}",
+                f"{getattr(sx_item, attribute_tag[index_x])}",
                 (240, 236, 225),
                 rc_font_32,
                 'mm',
@@ -244,15 +252,15 @@ async def draw_pet_info(uid, pet_data):
     
     # 画血脉类型
     shux_num = shux_num + 1
-    shuxing_img = Image.new('RGBA', (142, 38), XUEMAI_LIST_DRAW[pet_data['blood_id']][0])
-    sx_image = Image.open(TEXT_PATH / '血脉' / f'{pet_data["blood_id"]}.png').convert('RGBA').resize((42, 42))
+    shuxing_img = Image.new('RGBA', (142, 38), XUEMAI_LIST_DRAW[pet_data.blood_id][0])
+    sx_image = Image.open(TEXT_PATH / '血脉' / f'{pet_data.blood_id}.png').convert('RGBA').resize((42, 42))
     shuxing_img.paste(sx_image, (-2, -2), sx_image)
     shuxing_temp = Image.new('RGBA', (142, 38))
     shuxing_temp.paste(shuxing_img, (0, 0), mask_bar)
     shuxing_draw = ImageDraw.Draw(shuxing_temp)
     shuxing_draw.text(
         (88, 19),
-        f"{XUEMAI_LIST_DRAW[pet_data['blood_id']][1]}",
+        f"{XUEMAI_LIST_DRAW[pet_data.blood_id][1]}",
         (255, 255, 255),
         rc_font_32,
         'mm',
@@ -269,7 +277,7 @@ async def draw_pet_info(uid, pet_data):
         'lm',
     )
     start_height += 70
-    tx_icon = ROCOM_CHARACTER_PATH / f"{pet_data['feature']['id']}.png"
+    tx_icon = ROCOM_CHARACTER_PATH / f"{pet_data.feature.id}.png"
     if not os.path.exists(tx_icon):
         tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
     tx_img = Image.open(tx_icon).convert('RGBA').resize((121, 121))
@@ -298,7 +306,7 @@ async def draw_pet_info(uid, pet_data):
     
     start_height = start_height + tx_line_h
     
-    if len(pet_data['equip_skills']) > 0:
+    if len(pet_data.equip_skills) > 0:
         img.paste(rocom_title, (68, start_height), rocom_title)
         img_draw.text(
             (134, start_height + 30),
@@ -309,15 +317,15 @@ async def draw_pet_info(uid, pet_data):
         )
         start_height += 70
         jn_y = 0
-        for shul, skill in enumerate(pet_data['equip_skills']):
+        for shul, skill in enumerate(pet_data.equip_skills):
             jn_y = math.floor(shul / 2)
             jn_x = shul - (2 * jn_y)
-            jineng = skill['name']
-            info_skill = await get_skill_info(skill["id"])
+            jineng = skill.name
+            info_skill = await get_skill_info(skill.id)
             jineng_img = Image.new(
                 'RGBA', (520, 220), SHUX_SKILLLIST_DRAW[info_skill['families']]
             )
-            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill['iconid']}.png").convert('RGBA').resize((158, 158))
+            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill.iconid}.png").convert('RGBA').resize((158, 158))
             jineng_temp = Image.new('RGBA', (520, 220))
             jineng_temp.paste(jineng_img, (0, 0), bg_skill)
             jineng_temp.paste(skill_image, (35, 32), skill_image)
@@ -351,7 +359,7 @@ async def draw_pet_info(uid, pet_data):
             )
         start_height += (jn_y + 1) * 220 + 10
     
-    if len(pet_data['skills']) > 0:
+    if len(pet_data.skills) > 0:
         img.paste(rocom_title, (68, start_height), rocom_title)
         img_draw.text(
             (134, start_height + 30),
@@ -362,15 +370,15 @@ async def draw_pet_info(uid, pet_data):
         )
         start_height += 70
         jn_y = 0
-        for shul, skill in enumerate(pet_data['skills']):
-            jineng = skill['name']
+        for shul, skill in enumerate(pet_data.skills):
+            jineng = skill.name
             jn_y = math.floor(shul / 5)
             jn_x = shul - (5 * jn_y)
-            info_skill = await get_skill_info(skill["id"])
+            info_skill = await get_skill_info(skill.id)
             jineng_img = Image.new(
                 'RGBA', (207, 99), SHUX_SKILLLIST_DRAW[info_skill['families']]
             )
-            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill['iconid']}.png").convert('RGBA').resize((67, 67))
+            skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill.iconid}.png").convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
@@ -454,16 +462,16 @@ async def draw_pet_list(uid, pet_data):
         pet_info = pet_data[pet_id]
         rocom_img = Image.new('RGBA', (150, 216), (255, 255, 255, 0))
         #画背景与头像
-        if pet_info['mutation_type'] in [9, 1]:
+        if pet_info.mutation_type in [9, 1]:
             overlay_img = copy.deepcopy(yise_overlay)
-            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}_1.png'
+            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info.pet_id}_1.png'
         else:
             overlay_img = copy.deepcopy(xuancai_overlay)
-            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info["pet_id"]}.png'
+            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info.pet_id}.png'
         if not os.path.exists(pet_head_icon):
             pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
         head_img = Image.open(pet_head_icon).convert('RGBA').resize((130, 130))
-        pet_base = await get_pet_info(pet_info["pet_id"])
+        pet_base = await get_pet_info(pet_info.pet_id)
         pet_bg_img = Image.new('RGBA', (150, 216), SHUX_LIST_DRAW[pet_base['unit_type'][0]][0])
         combined_image = ImageChops.overlay(pet_bg_img, overlay_img)
         rocom_img.paste(combined_image, (0, 0), pet_bg)
@@ -474,18 +482,18 @@ async def draw_pet_list(uid, pet_data):
             sx_img = Image.open(TEXT_PATH / '属性' / f'{shuxing_item}.png').convert('RGBA').resize((45, 45))
             rocom_img.paste(sx_img, (index_sx * 30 - 5, -5), sx_img)
         #画血脉
-        xm_img = Image.open(TEXT_PATH / '血脉' / f'{pet_info["blood_id"]}.png').convert('RGBA').resize((45, 45))
+        xm_img = Image.open(TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png').convert('RGBA').resize((45, 45))
         rocom_img.paste(xm_img, (110, -5), xm_img)
         #画标志
-        if pet_info['mutation_type'] in [1,8,9]:
-            star_img = Image.open(TEXT_PATH / f'star_{pet_info["mutation_type"]}.png')
+        if pet_info.mutation_type in [1, 8, 9]:
+            star_img = Image.open(TEXT_PATH / f'star_{pet_info.mutation_type}.png')
             rocom_img.paste(star_img, (6, 110), star_img)
         #画等级
         level_img = Image.open(TEXT_PATH / f'level_icon.png').convert('RGBA')
         level_draw = ImageDraw.Draw(level_img)
         level_draw.text(
             (37, 19),
-            f'Lv{pet_info["level"]}',
+            f'Lv{pet_info.level}',
             (255, 255, 255),
             rc_font_22,
             'mm',
@@ -496,7 +504,7 @@ async def draw_pet_list(uid, pet_data):
         rocom_draw = ImageDraw.Draw(rocom_img)
         rocom_draw.text(
             (75, 170),
-            f'{pet_info["name"]}',
+            f'{pet_info.name}',
             (255, 255, 255),
             skill_font_22,
             'mm',
