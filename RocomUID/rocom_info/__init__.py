@@ -124,21 +124,50 @@ async def get_rocom_info_img(bot: Bot, ev: Event):
 @sv_rc_rocom_info.on_command('查找精灵')
 async def find_rocom_list_info(bot: Bot, ev: Event):
     args = ev.text.split()
+    help_msg = '请输入 查找精灵+查找条件[名字/属性/蛋组/特性/技能/种族(生命、物攻、魔攻、物防、魔防、速度[小于/大于])] 不同的筛选条件用空格分开，类型与内容用逗号分开。\n举例：查找精灵 犬\n举例：查找精灵 特性,最好的伙伴 技能,折射,光球 魔攻,大于,60'
     if len(args) < 1:
-        return await bot.send('请输入 查找精灵+查找条件[名字/属性/蛋组/特性/技能/种族(生命、物攻、魔攻、物防、魔防、速度[小于/大于])] 不同的筛选条件用空格分开，类型与内容用逗号分开。\n举例：查找精灵 特性,最好的伙伴 技能,折射,光球 魔攻,大于,60', at_sender=True)
-    find_tj_list = ['名字','特性','技能','生命','物攻','物防','魔攻','魔防','速度','属性','蛋组']
+        return await bot.send(help_msg, at_sender=True)
+    find_tj_list = ['名字', '特性', '技能', '生命', '物攻', '物防', '魔攻', '魔防', '速度', '属性', '蛋组']
     zhongzu_index_list = {
-        '生命':'attr_hp',
-        '物攻':'attr_atk',
-        '魔攻':'attr_spatk',
-        '物防':'attr_def',
-        '魔防':'attr_spdef',
-        '速度':'attr_spd'
+        '生命': 'attr_hp',
+        '物攻': 'attr_atk',
+        '魔攻': 'attr_spatk',
+        '物防': 'attr_def',
+        '魔防': 'attr_spdef',
+        '速度': 'attr_spd'
     }
+
+    find_args = []
+    for item in args:
+        item = item.replace('，', ',').strip()
+        iteminfo = [info.strip() for info in re.split(',', item)]
+        if iteminfo[0] == '':
+            return await bot.send('查找条件不能为空', at_sender=True)
+
+        if iteminfo[0] not in find_tj_list:
+            find_args.append(['名字', item])
+            continue
+
+        if iteminfo[0] in ['名字', '特性', '蛋组']:
+            if len(iteminfo) < 2 or iteminfo[1] == '':
+                return await bot.send(f'请输入{iteminfo[0]}的查询内容', at_sender=True)
+        elif iteminfo[0] in ['属性', '技能']:
+            if len(iteminfo) < 2 or any(info == '' for info in iteminfo[1:]):
+                return await bot.send(f'请输入{iteminfo[0]}的查询内容', at_sender=True)
+        elif iteminfo[0] in ['生命', '物攻', '魔攻', '物防', '魔防', '速度']:
+            if len(iteminfo) < 3 or iteminfo[1] == '' or iteminfo[2] == '':
+                return await bot.send(f'请输入{iteminfo[0]}的比较方式和数值，例如：{iteminfo[0]},大于,60', at_sender=True)
+            if iteminfo[1] not in ['大于', '小于']:
+                return await bot.send(f'{iteminfo[0]}的比较方式只能为“大于”或“小于”', at_sender=True)
+            if not await is_numeric(iteminfo[2]):
+                return await bot.send(f'{iteminfo[0]}的比较数值请输入数字', at_sender=True)
+
+        find_args.append(iteminfo)
+
     rocom_find_list = list(pet_list.keys())
     find_cocom_list = copy.deepcopy(rocom_find_list)
     for rocom_id in rocom_find_list:
-        if pet_list[rocom_id]["feature"].get("name",'') == '' and rocom_id in find_cocom_list:
+        if pet_list[rocom_id]["feature"].get("name", '') == '' and rocom_id in find_cocom_list:
             find_cocom_list.remove(rocom_id)
         if len(pet_list[rocom_id]["level_skill_list"]) == 0 and rocom_id in find_cocom_list:
             find_cocom_list.remove(rocom_id)
@@ -147,26 +176,19 @@ async def find_rocom_list_info(bot: Bot, ev: Event):
         if len(pet_list[rocom_id]["blood_skill_list"]) == 0 and rocom_id in find_cocom_list:
             find_cocom_list.remove(rocom_id)
     rocom_find_list = copy.deepcopy(find_cocom_list)
-    for item in args:
-        item = item.replace('，',',')
-        iteminfo = re.split(',', item)
-        #print(iteminfo)
-        if iteminfo[0] not in find_tj_list:
-            continue
+
+    for iteminfo in find_args:
         if len(rocom_find_list) <= 0:
             break
         if iteminfo[0] == '名字':
             for rocom_id in rocom_find_list:
-                find_name_flag = 0
-                if str(iteminfo[1]) in str(pet_list[rocom_id]):
-                    find_name_flag = 1
-                if find_name_flag == 0:
-                    find_cocom_list.remove(rocom_id) 
+                if str(iteminfo[1]) not in str(pet_list[rocom_id].get('name', '')):
+                    find_cocom_list.remove(rocom_id)
         if iteminfo[0] == '特性':
             for rocom_id in rocom_find_list:
-                if str(iteminfo[1]) not in str(pet_list[rocom_id]["feature"].get("name",'')):
+                if str(iteminfo[1]) not in str(pet_list[rocom_id]["feature"].get("name", '')):
                     find_cocom_list.remove(rocom_id)
-            #print(find_cocom_list)
+            # print(find_cocom_list)
         if iteminfo[0] == '蛋组':
             for rocom_id in rocom_find_list:
                 if str(iteminfo[1]) not in str(pet_list[rocom_id]["egg_group"]):
@@ -183,7 +205,7 @@ async def find_rocom_list_info(bot: Bot, ev: Event):
                         find_list_info.append(shuxing_name)
                 if find_shux_list != find_list_info:
                     find_cocom_list.remove(rocom_id)
-        if iteminfo[0] in ['生命','物攻','魔攻','物防','魔防','速度']:
+        if iteminfo[0] in ['生命', '物攻', '魔攻', '物防', '魔防', '速度']:
             for rocom_id in rocom_find_list:
                 if iteminfo[1] == '大于':
                     if int(pet_list[rocom_id]["attribute"][zhongzu_index_list[iteminfo[0]]]) < int(iteminfo[2]):
@@ -191,14 +213,13 @@ async def find_rocom_list_info(bot: Bot, ev: Event):
                 else:
                     if int(pet_list[rocom_id]["attribute"][zhongzu_index_list[iteminfo[0]]]) > int(iteminfo[2]):
                         find_cocom_list.remove(rocom_id)
-            #print(find_cocom_list)
+            # print(find_cocom_list)
         if iteminfo[0] == '技能':
-            jineng_find_flag = 0
             find_jineng_list = []
             for jineng_item in iteminfo:
                 if jineng_item != '技能':
                     find_jineng_list.append(jineng_item)
-            #print(find_jineng_list)
+            # print(find_jineng_list)
             for rocom_id in rocom_find_list:
                 find_list_info = []
                 for jineng_name in find_jineng_list:
@@ -219,26 +240,28 @@ async def find_rocom_list_info(bot: Bot, ev: Event):
                         find_list_info.append(jineng_name)
                 if find_jineng_list != find_list_info:
                     find_cocom_list.remove(rocom_id)
-            #print(find_cocom_list)
+            # print(find_cocom_list)
         rocom_find_list = copy.deepcopy(find_cocom_list)
     if len(find_cocom_list) > 0:
-        mes = f"一共查找到{len(find_cocom_list)}只符合条件的精灵\n具体信息请输入rc图鉴【精灵名】查询\n"
-        if len(find_cocom_list) > 750:
-            mes += f"超过700只了，这不是到处都是吗"
+        find_name_list = []
+        for rocom_id in find_cocom_list:
+            if pet_list[rocom_id]['name'] not in find_name_list:
+                find_name_list.append(pet_list[rocom_id]['name'])
+
+        mes = f"一共查找到{len(find_name_list)}只符合条件的精灵\n具体信息请输入rc图鉴【精灵名】查询\n"
+        if len(find_name_list) > 100:
+            mes += "超过700只了，这不是到处都是吗"
         else:
             shuling = 1
-            find_name_list = []
-            for rocom_id in find_cocom_list:
-                if pet_list[rocom_id]['name'] not in find_name_list:
-                    mes += f"{pet_list[rocom_id]['name']}"
-                    if shuling == 4:
-                        shuling = 1
-                        mes += '\n'
-                    else:
-                        shuling = shuling + 1
-                        if rocom_id != find_cocom_list[len(find_cocom_list) - 1]:
-                            mes += '、'
-                    find_name_list.append(pet_list[rocom_id]['name'])
+            for index, rocom_name in enumerate(find_name_list):
+                mes += f"{rocom_name}"
+                if shuling == 4:
+                    shuling = 1
+                    mes += '\n'
+                else:
+                    shuling = shuling + 1
+                    if index != len(find_name_list) - 1:
+                        mes += '、'
     else:
         mes = '没有查找到符合您输入条件的精灵'
     await bot.send(mes)
