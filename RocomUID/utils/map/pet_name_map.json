@@ -3470,6 +3470,30 @@
         ],
         "icon": "JL_jingshiwo_yidi4"
     },
+    "3487": {
+        "name": "小丑豆豆",
+        "form": "",
+        "unit_type": [
+            18
+        ],
+        "icon": "JL_xiaochoudoudou"
+    },
+    "3488": {
+        "name": "小丑兔",
+        "form": "",
+        "unit_type": [
+            18
+        ],
+        "icon": "JL_xiaochoutu"
+    },
+    "3489": {
+        "name": "小丑公爵",
+        "form": "",
+        "unit_type": [
+            18
+        ],
+        "icon": "JL_xiaochougongjue"
+    },
     "3490": {
         "name": "吸泥鸥",
         "form": "",
@@ -3710,6 +3734,22 @@
             5
         ],
         "icon": "JL_diyinhaoyu"
+    },
+    "3531": {
+        "name": "小雪人",
+        "form": "",
+        "unit_type": [
+            9
+        ],
+        "icon": "JL_xiaoxueren"
+    },
+    "3532": {
+        "name": "雪怪",
+        "form": "",
+        "unit_type": [
+            9
+        ],
+        "icon": "JL_xueguai"
     },
     "3533": {
         "name": "雪绒鸟",
@@ -3960,6 +4000,24 @@
             18
         ],
         "icon": "JL_heiyufuren"
+    },
+    "3572": {
+        "name": "爆焰仔",
+        "form": "",
+        "unit_type": [
+            4,
+            10
+        ],
+        "icon": "JL_baoyanzai"
+    },
+    "3573": {
+        "name": "爆焰喷喷",
+        "form": "",
+        "unit_type": [
+            4,
+            10
+        ],
+        "icon": "JL_baoyanpengpeng"
     },
     "3577": {
         "name": "墨鱿士",
@@ -5327,6 +5385,259 @@
         ],
         "icon": "JL_xueyingwawa"
     },
+    "3747": {
+        "name": "莫比乌乌",
+        "form": "",
+        "unit_type": [
+            10,
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3748": {
+        "name": "克莱因龙",
+        "form": "",
+        "unit_type": [
+            10,
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3749": {
+        "name": "森豆丁",
+        "form": "",
+        "unit_type": [
+            3
+        ],
+        "icon": "JL_huohongwei"
+    },
+    "3750": {
+        "name": "森蛮人",
+        "form": "",
+        "unit_type": [
+            3
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3751": {
+        "name": "森巨人",
+        "form": "",
+        "unit_type": [
+            3
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3752": {
+        "name": "丁丁卯",
+        "form": "",
+        "unit_type": [
+            19,
+            13
+        ],
+        "icon": "JL_huohongwei"
+    },
+    "3753": {
+        "name": "卯山咪钥",
+        "form": "",
+        "unit_type": [
+            19,
+            13
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3754": {
+        "name": "火豆丁",
+        "form": "",
+        "unit_type": [
+            4
+        ],
+        "icon": "JL_huohongwei"
+    },
+    "3755": {
+        "name": "火蛮人",
+        "form": "",
+        "unit_type": [
+            4
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3756": {
+        "name": "火巨人",
+        "form": "",
+        "unit_type": [
+            4
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3757": {
+        "name": "点点",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_huohongwei"
+    },
+    "3758": {
+        "name": "珀尔鼬",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3759": {
+        "name": "苞米仔",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3760": {
+        "name": "炮米花",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3761": {
+        "name": "诅咒狼灵",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3762": {
+        "name": "新月狼灵",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3763": {
+        "name": "银月狼王",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3764": {
+        "name": "新月鹭",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3765": {
+        "name": "月辉鹭",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3766": {
+        "name": "月使鹭纳",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3767": {
+        "name": "章脑丸",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3768": {
+        "name": "智辉章脑",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3769": {
+        "name": "乌头蝇",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3770": {
+        "name": "乌蝇飞贼",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3771": {
+        "name": "小浣蛋",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3772": {
+        "name": "黑手浣熊",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3773": {
+        "name": "幽铃",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3774": {
+        "name": "摇铃魔偶",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3775": {
+        "name": "布灵",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3776": {
+        "name": "布灵布灵",
+        "form": "",
+        "unit_type": [
+            16
+        ],
+        "icon": "JL_yadanbin"
+    },
+    "3777": {
+        "name": "幽影树",
+        "form": "突变的样子",
+        "unit_type": [
+            17,
+            3
+        ],
+        "icon": "JL_youlingshu"
+    },
     "4005": {
         "name": "圣水守护",
         "form": "首领形态",
@@ -6067,6 +6378,23 @@
         ],
         "icon": "JL_yajiji_shouling"
     },
+    "5053": {
+        "name": "深渊罗隐",
+        "form": "",
+        "unit_type": [
+            8,
+            18
+        ],
+        "icon": "JL_shenyuanluoyin"
+    },
+    "5054": {
+        "name": "高帽鹬者",
+        "form": "",
+        "unit_type": [
+            15
+        ],
+        "icon": "JL_gaomaoyuzhe"
+    },
     "6001": {
         "name": "小咪",
         "form": "首领形态",
@@ -6389,6 +6717,39 @@
         ],
         "icon": "JL_liuxiangmengmaxiang"
     },
+    "8701": {
+        "name": "火羽",
+        "form": "",
+        "unit_type": [
+            4,
+            15
+        ],
+        "icon": "JL_huoyu"
+    },
+    "9001": {
+        "name": "幸运惊喜盒",
+        "form": "",
+        "unit_type": [
+            1
+        ],
+        "icon": "JL_songzai"
+    },
+    "9002": {
+        "name": "幸运惊喜盒",
+        "form": "",
+        "unit_type": [
+            1
+        ],
+        "icon": "JL_songzai"
+    },
+    "9003": {
+        "name": "幸运惊喜盒",
+        "form": "",
+        "unit_type": [
+            1
+        ],
+        "icon": "JL_songzai"
+    },
     "9819": {
         "name": "木桶",
         "form": "",
@@ -6521,6 +6882,23 @@
         ],
         "icon": "JL_caidiesha_shouling"
     },
+    "13000169": {
+        "name": "深渊罗隐",
+        "form": "领地试炼用",
+        "unit_type": [
+            8,
+            18
+        ],
+        "icon": "JL_shenyuanluoyin"
+    },
+    "13000170": {
+        "name": "高帽鹬者",
+        "form": "领地试炼用",
+        "unit_type": [
+            15
+        ],
+        "icon": "JL_gaomaoyuzhe"
+    },
     "14000001": {
         "name": "果冻-剧情变形用",
         "form": "",
@@ -6536,6 +6914,15 @@
             15
         ],
         "icon": "JL_banban"
+    },
+    "14000003": {
+        "name": "芽眼魔-守护地特殊3C专用",
+        "form": "",
+        "unit_type": [
+            18,
+            5
+        ],
+        "icon": "JL_yayanmo"
     },
     "15000001": {
         "name": "斑斑 - （玩法用）",
@@ -6569,6 +6956,22 @@
             8
         ],
         "icon": "JL_dishu"
+    },
+    "16000004": {
+        "name": "迪莫",
+        "form": "",
+        "unit_type": [
+            6
+        ],
+        "icon": "JL_dimo"
+    },
+    "16000007": {
+        "name": "迪莫",
+        "form": "",
+        "unit_type": [
+            6
+        ],
+        "icon": "JL_dimo"
     },
     "17000001": {
         "name": "小帕尔-变形测试用",
@@ -6637,5 +7040,69 @@
             12
         ],
         "icon": "JL_duudbao"
+    },
+    "19000001": {
+        "name": "可立鸡-变形测试用",
+        "form": "",
+        "unit_type": [
+            4
+        ],
+        "icon": "JL_keliji"
+    },
+    "19000002": {
+        "name": "紫翎鹰-变形测试用",
+        "form": "",
+        "unit_type": [
+            15
+        ],
+        "icon": "JL_zilingying"
+    },
+    "19000003": {
+        "name": "果冻-变形测试用",
+        "form": "",
+        "unit_type": [
+            5
+        ],
+        "icon": "JL_guodong"
+    },
+    "19000004": {
+        "name": "紫翎鹰",
+        "form": "",
+        "unit_type": [
+            15
+        ],
+        "icon": "JL_zilingying"
+    },
+    "19000005": {
+        "name": "可立鸡",
+        "form": "",
+        "unit_type": [
+            4
+        ],
+        "icon": "JL_keliji"
+    },
+    "19000006": {
+        "name": "果冻",
+        "form": "",
+        "unit_type": [
+            5
+        ],
+        "icon": "JL_guodong"
+    },
+    "19000008": {
+        "name": "钨丝贝贝（S2剧情骑乘专用）",
+        "form": "",
+        "unit_type": [
+            19
+        ],
+        "icon": "JL_wusibeibei"
+    },
+    "19000009": {
+        "name": "机幕方舟（S2剧情战斗专用）",
+        "form": "",
+        "unit_type": [
+            19
+        ],
+        "icon": "JL_jimufangzhou"
     }
 }
