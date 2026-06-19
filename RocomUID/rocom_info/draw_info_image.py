@@ -250,7 +250,7 @@ async def draw_rocom_info(rocom_info):
         pokemon_img = Image.open(ROCOM_ICON_PATH / f'{item["icon"]}.png').convert('RGBA').resize((150, 150))
         img.paste(pokemon_img, (icon_x - 5, y_num + 10), pokemon_img)
         img_draw.text(
-            (icon_x + 70, y_num + 220),
+            (icon_x + 70, y_num + 215),
             f'{item["name"]}',
             (60, 60, 60),
             skill_font_22,
@@ -265,14 +265,14 @@ async def draw_rocom_info(rocom_info):
                 rc_font_28,
                 'mm',
             )
-    # if rocom_evolution_list[rocomname][2] != '':
-        # img_draw.text(
-            # (861, 1040),
-            # f'{rocom_evolution_list[rocomname][2]}',
-            # info_text_color,
-            # rc_font_34,
-            # 'mm',
-        # )
+        if item['pet_id'] == rocom_info['id'] and item['evolution_need'] != '':
+            img_draw.text(
+                (861, 1070),
+                f"{item['evolution_need']}",
+                info_text_color,
+                skill_font_32,
+                'mm',
+            )
     
     # 画属性类型
     for shul, shuxing in enumerate(rocom_info["unit_type"]):
