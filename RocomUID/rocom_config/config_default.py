@@ -36,11 +36,12 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
     ),
     "RC_merchant_render_style": GsStrConfig(
         "远行商人渲染样式",
-        "用于选择远行商人图片渲染样式；new为新版风格，classic为原样式",
-        "new",
+        "用于选择远行商人图片渲染样式",
+        "简约",
         options=[
-            "new",
-            "classic",
+            "简约",
+            "大字版",
+            "远区商人",
         ],
     ),
     "RC_home_use_qq_avatar": GsBoolConfig(

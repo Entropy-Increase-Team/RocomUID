@@ -11,6 +11,7 @@ from gsuid_core.utils.image.image_tools import get_pic
 
 from ..rocom_config.rocom_config import RC_CONFIG
 from ..utils.fonts.rocom_fonts import rc_font_40, skill_font_18, skill_font_26
+from .axin_style import draw_merchant_info_axin
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 
@@ -440,8 +441,21 @@ async def _draw_merchant_info_classic(merchant_info):
     return res
 
 
+def _normalize_merchant_render_style(style: str) -> str:
+    style = str(style or '').strip().lower()
+    if style in {'简约', 'classic'}:
+        return 'classic'
+    if style in {'大字版', 'new'}:
+        return 'new'
+    if style in {'远区商人', 'axin', '阿信识区'}:
+        return 'axin'
+    return style or 'new'
+
+
 async def draw_merchant_info(merchant_info):
-    style = str(RC_CONFIG.get_config('RC_merchant_render_style').data or 'new').lower()
+    style = _normalize_merchant_render_style(RC_CONFIG.get_config('RC_merchant_render_style').data)
     if style == 'classic':
         return await _draw_merchant_info_classic(merchant_info)
+    if style == 'axin':
+        return await draw_merchant_info_axin(merchant_info)
     return await _draw_merchant_info_new(merchant_info)

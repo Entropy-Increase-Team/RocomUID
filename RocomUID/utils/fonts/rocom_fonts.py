@@ -4,12 +4,16 @@ from PIL import ImageFont
 
 FONT_ORIGIN_PATH = Path(__file__).parent / "rocom_origin.ttf"
 SKILL_FONT_ORIGIN_PATH = Path(__file__).parent / "skill_origin.ttf"
+DUNDUN_FONT_PATH = Path(__file__).parent / "ShangShouDunDunTi-2.ttf"
 
 def rocom_font_origin(size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(FONT_ORIGIN_PATH), size=size)
 
 def skill_font_origin(size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(SKILL_FONT_ORIGIN_PATH), size=size)
+
+def dundun_font_origin(size: int) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(str(DUNDUN_FONT_PATH), size=size)
 
 rc_font_12 = rocom_font_origin(12)
 rc_font_14 = rocom_font_origin(14)
