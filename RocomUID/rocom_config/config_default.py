@@ -34,6 +34,15 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
             "90",
         ],
     ),
+    "RC_merchant_render_style": GsStrConfig(
+        "远行商人渲染样式",
+        "用于选择远行商人图片渲染样式；new为新版风格，classic为原样式",
+        "new",
+        options=[
+            "new",
+            "classic",
+        ],
+    ),
     "RC_home_use_qq_avatar": GsBoolConfig(
         "家园信息使用用户头像",
         "开启后家园信息头像使用查询者头像；关闭后固定使用默认头像",
