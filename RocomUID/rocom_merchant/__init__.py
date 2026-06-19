@@ -26,7 +26,7 @@ async def get_merchant_info_list(bot: Bot, ev: Event):
     if len(merchant_info) == 0:
         return await bot.send(f"远行商人商品未刷新\n可输入[{P}开启远行商人]订阅远行商人商品信息推送", at_sender=True)
     im = await draw_merchant_info(merchant_info)
-    await bot.send(im, at_sender=True)
+    await bot.send(im)
 
 @sv_merchant.on_command(('商人'))
 async def get_merchant_info_list_cs(bot: Bot, ev: Event):
