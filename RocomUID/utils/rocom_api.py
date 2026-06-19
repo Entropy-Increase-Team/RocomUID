@@ -602,52 +602,94 @@ class WegameApi():
             self._wegame_headers(),
             params=params,
         )
-        if data is not None:
-            activities = data.get("merchantActivities")
-            if activities is None:
-                activities = data.get("merchant_activities")
-            activity = activities[0] if activities else {}
-            props = activity.get("get_props", [])
-            products = []
-            
-            async def is_active(item: Dict[str, Any]) -> bool:
-                start_time = item.get("start_time")
-                end_time = item.get("end_time")
-                if start_time is None or end_time is None:
-                    return True
-                try:
-                    return int(start_time) <= nowtime < int(end_time)
-                except (TypeError, ValueError):
-                    return True
-            # print(props)
-            find_flag = 0
-            for item in props:
-                if not await is_active(item):
-                    continue
-                if item.get('start_time') is not None:
-                    start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item['start_time'])/1000))
-                    find_flag = 1
-                else:
-                    start_time = time.strftime("%m月%d日", time.localtime(int(nowtime/1000)))
-                    start_time = f"{start_time} 08:00"
-                if item.get('end_time') is not None:
-                    end_time = time.strftime("%H:%M", time.localtime(int(item['end_time'])/1000))
-                else:
-                    end_time = "23:59"
-                products.append(
-                    {
-                        "name": item.get("name", "未知商品"),
-                        "image": item.get("icon_url", None),
-                        "starttime": start_time,
-                        "endtime": end_time,
-                    }
-                )
-            if find_flag == 1:
-                return products
-            else:
-                return []
-        else:
+        if data is None:
             return []
+
+        activities = data.get("merchantActivities")
+        if activities is None:
+            activities = data.get("merchant_activities")
+        activity = activities[0] if activities else {}
+
+        props = activity.get("get_props", [])
+        extra_props = activity.get("get_extra_props", [])
+        pets = activity.get("get_pets", [])
+        all_items = [*props, *extra_props, *pets]
+        random_goods = data.get("random_goods", [])
+
+        price_map = {}
+        limit_map = {}
+        for item in random_goods:
+            goods_name = item.get("goods_name")
+            if not goods_name:
+                continue
+            price_map[goods_name] = item.get("price", 0)
+            limit_map[goods_name] = item.get("buy_limit_num", 0)
+
+        def is_active(item: Dict[str, Any]) -> bool:
+            start_time = item.get("start_time")
+            end_time = item.get("end_time")
+            if start_time is None or end_time is None:
+                return True
+            try:
+                return int(start_time) <= nowtime < int(end_time)
+            except (TypeError, ValueError):
+                return True
+
+        def is_hot_item(item: Dict[str, Any]) -> bool:
+            start_time = item.get("start_time")
+            end_time = item.get("end_time")
+            if start_time is None or end_time is None:
+                return True
+            try:
+                duration_hours = (int(end_time) - int(start_time)) / (1000 * 60 * 60)
+                start_hour = int(time.strftime("%H", time.localtime(int(start_time) / 1000)))
+                end_hour = int(time.strftime("%H", time.localtime(int(end_time) / 1000)))
+                return duration_hours >= 24 or (start_hour <= 8 and end_hour >= 23)
+            except (TypeError, ValueError):
+                return False
+
+        products = []
+        for item in all_items:
+            if not is_active(item):
+                continue
+
+            name = item.get("name", "未知商品")
+            if item.get("start_time") is not None:
+                start_time = time.strftime("%m月%d日 %H:%M", time.localtime(int(item["start_time"]) / 1000))
+            else:
+                start_time = time.strftime("%m月%d日", time.localtime(int(nowtime / 1000)))
+                start_time = f"{start_time} 08:00"
+
+            if item.get("end_time") is not None:
+                end_time = time.strftime("%H:%M", time.localtime(int(item["end_time"]) / 1000))
+            else:
+                end_time = "23:59"
+
+            buy_limit = limit_map.get(name, 0)
+            is_hot = is_hot_item(item)
+            if buy_limit:
+                remaining_str = f"本日限购{buy_limit}个" if is_hot else f"本轮限购{buy_limit}个"
+            else:
+                remaining_str = f"{start_time} - {end_time}"
+
+            products.append(
+                {
+                    "name": name,
+                    "goods_name": name,
+                    "image": item.get("icon_url", None),
+                    "iconUrl": item.get("icon_url", None),
+                    "starttime": start_time,
+                    "endtime": end_time,
+                    "price": price_map.get(name, 0),
+                    "buy_limit_num": buy_limit,
+                    "isHot": is_hot,
+                    "isEnded": False,
+                    "remainingStr": remaining_str,
+                }
+            )
+
+        products.sort(key=lambda x: (0 if not x["isHot"] else 1, -(x["price"] or 0)))
+        return products
 
 class RocomApi():
     BASE_URL = "https://morefun.game.qq.com/gw2/gateway/v1/"
