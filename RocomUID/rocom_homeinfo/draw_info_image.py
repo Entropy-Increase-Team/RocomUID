@@ -355,6 +355,6 @@ async def draw_home_info(ev, uid, home_info, show_pets: bool = True, show_plants
         'rm',
     )
 
-    img.paste(footer, (270, bg_height - 44), footer)
+    img.paste(footer, (220, bg_height - 44), footer)
     res = await convert_img(img)
     return res
