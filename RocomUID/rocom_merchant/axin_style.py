@@ -229,10 +229,15 @@ def _compose(merchant_info):
     rotating = [i for i in merchant_info if i.get("is_rotating")]
     longterm = [i for i in merchant_info if not i.get("is_rotating")]
 
-    # 各面板内按品质排序（红→紫→蓝），同品质保持接口原序（稳定排序）
-    by_tier = lambda i: _TIER_RANK.get(i.get("tier", "blue"), 9)
-    rotating.sort(key=by_tier)
-    longterm.sort(key=by_tier)
+    # 商品价值排序：先按价值分档红→紫→蓝，再按价格高→低。
+    def by_value(item):
+        return (
+            _TIER_RANK.get(item.get("tier", "blue"), 9),
+            -int(item.get("value_price", item.get("price") or 0) or 0),
+        )
+
+    rotating.sort(key=by_value)
+    longterm.sort(key=by_value)
 
     # 角色状态只看轮换商品（上面板）：常驻商品固定，参与状态判断没意义
     tiers = {i.get("tier", "blue") for i in rotating}
@@ -331,18 +336,29 @@ if _GOODS_CONF_PATH.exists():
         _GOODS_PRICE = {}
 
 
-def _classify_value(name: str) -> str:
-    """按价格把商品分为 red/purple/blue 三档（柔和分色）。"""
-    price = _GOODS_PRICE.get(name)
-    if price is None:
-        # 接口里蛋叫「炫彩精灵蛋」，价格表里叫「炫彩蛋」，去掉「精灵」再查一次
-        price = _GOODS_PRICE.get(name.replace("精灵蛋", "蛋"))
-    if price is None:
+def _get_value_price(name: str, item_price=None) -> int:
+    """获取商品价值价格，用于分档和排序。"""
+    try:
+        price = int(item_price or 0)
+    except (TypeError, ValueError):
+        price = 0
+
+    if price <= 0:
+        price = int(_GOODS_PRICE.get(name) or _GOODS_PRICE.get(name.replace("精灵蛋", "蛋")) or 0)
+
+    # 少量接口名/配表名不完全一致时的兜底，保证价值排名不掉档
+    if price <= 0:
         if name in ["炫彩精灵蛋", "炫彩蛋", "棱镜球", "祝福项坠"]:
-            return "red"
+            return 800000
         if name in ["国王球"] or "血脉秘药" in name:
-            return "purple"
-        return "purple"
+            return 160000
+        return 160000
+    return price
+
+
+def _classify_value(name: str, item_price=None) -> str:
+    """按价格把商品分为 red/purple/blue 三档（柔和分色）。"""
+    price = _get_value_price(name, item_price)
     if price >= 800000:
         return "red"
     if price >= 160000:
@@ -357,22 +373,22 @@ _ROTATING_MAX_MS = int(4.5 * 3600 * 1000)
 def _classify(item):
     """给商品补出图分组字段：tier(品质分色) / is_rotating(轮换→上面板，常驻→下面板)。"""
     name = _item_name(item)
-    item["tier"] = _classify_value(name)
+    item["value_price"] = _get_value_price(name, item.get("price"))
+    item["tier"] = _classify_value(name, item.get("value_price"))
+
+    source = item.get("merchant_source", "props")
+    if source != "props":
+        item["is_rotating"] = False
+        return
 
     is_rotating = False
-    start = item.get("start_time") or item.get("startTime")
-    end = item.get("end_time") or item.get("endTime")
+    start, end = item.get("start_time"), item.get("end_time")
     if start is not None and end is not None:
         try:
             duration = int(end) - int(start)
             is_rotating = 0 < duration <= _ROTATING_MAX_MS
         except (TypeError, ValueError):
             is_rotating = False
-
-    # 如果接口已直接标记，优先兼容
-    if "is_rotating" in item:
-        is_rotating = bool(item.get("is_rotating"))
-
     item["is_rotating"] = is_rotating
 
 

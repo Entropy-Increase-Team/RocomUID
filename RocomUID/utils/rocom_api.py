@@ -613,7 +613,11 @@ class WegameApi():
         props = activity.get("get_props", [])
         extra_props = activity.get("get_extra_props", [])
         pets = activity.get("get_pets", [])
-        all_items = [*props, *extra_props, *pets]
+        all_items = [
+            *((item, "props") for item in props),
+            *((item, "extra_props") for item in extra_props),
+            *((item, "pets") for item in pets),
+        ]
         random_goods = data.get("random_goods", [])
 
         price_map = {}
@@ -649,7 +653,7 @@ class WegameApi():
                 return False
 
         products = []
-        for item in all_items:
+        for item, merchant_source in all_items:
             if not is_active(item):
                 continue
 
@@ -678,6 +682,9 @@ class WegameApi():
                     "goods_name": name,
                     "image": item.get("icon_url", None),
                     "iconUrl": item.get("icon_url", None),
+                    "merchant_source": merchant_source,
+                    "start_time": item.get("start_time"),
+                    "end_time": item.get("end_time"),
                     "starttime": start_time,
                     "endtime": end_time,
                     "price": price_map.get(name, 0),
