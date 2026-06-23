@@ -6,6 +6,7 @@ import pytz
 from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
+from gsuid_core.logger import logger
 from datetime import datetime, timedelta
 from ..utils.rocom_api import wegame_api,text_api
 from gsuid_core.subscribe import gs_subscribe
