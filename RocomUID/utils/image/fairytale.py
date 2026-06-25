@@ -205,6 +205,67 @@ def paste_center(bg: Image.Image, fg: Image.Image, cx: int, cy: int) -> None:
     bg.alpha_composite(fg.convert('RGBA'), (x, y))
 
 
+def drop_shadow(
+    img: Image.Image,
+    offset=(1, 2),
+    blur: int = 2,
+    color=(0, 0, 0),
+    opacity: float = 0.42,
+):
+    """给透明图加柔和投影（替代 CSS filter:drop-shadow）。
+
+    返回 (带阴影的扩展画布, pad)；原图内容位于扩展画布的 (pad, pad)，
+    调用方贴图时用 (x - pad, y - pad) 抵消扩展，保持原图左上角仍落在 (x, y)。
+    """
+    img = img.convert('RGBA')
+    w, h = img.size
+    pad = blur * 3 + max(abs(offset[0]), abs(offset[1])) + 2
+    canvas = Image.new('RGBA', (w + pad * 2, h + pad * 2), (0, 0, 0, 0))
+
+    alpha = img.split()[3].point(lambda v: int(v * opacity))
+    shadow = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    solid = Image.new('RGBA', (w, h), (*color, 255))
+    shadow.paste(solid, (pad + offset[0], pad + offset[1]), alpha)
+    shadow = shadow.filter(ImageFilter.GaussianBlur(blur))
+
+    canvas = Image.alpha_composite(canvas, shadow)
+    canvas.alpha_composite(img, (pad, pad))
+    return canvas, pad
+
+
+def paste_text(
+    base: Image.Image,
+    x: float,
+    y: float,
+    text: str,
+    size: int,
+    color,
+    rot: float = 0.0,
+    stroke_width: int = 0,
+    stroke_fill=None,
+    center: bool = False,
+) -> None:
+    """在 base 上落一行混合字体文字（顿顿体+生僻字回退），可旋转，原地修改 base。
+
+    替代 CSS transform:rotate 文字。文字先画到紧凑透明层、按 rot 旋转(绕中心)，再贴回。
+    center=False：(x, y) = 文字左上角（对应 html left/top，与小角度旋转视觉一致）。
+    center=True ：(x, y) = 文字中心（卡内居中文字用，旋转绕中心、规避 htmlkit 居中 bug）。
+    """
+    w = cute_width(text, size)
+    pad = stroke_width + 3
+    lw = int(round(w)) + pad * 2
+    lh = int(round(size * 1.4)) + pad * 2
+    layer = Image.new('RGBA', (lw, lh), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    draw_cute(d, (lw / 2, lh / 2), text, size, color, anchor='mm',
+              stroke_width=stroke_width, stroke_fill=stroke_fill)
+    if rot:
+        layer = tilt(layer, -rot)        # CSS rotate 顺时针为正，PIL 逆时针为正，取负对齐
+    cx = x if center else x + w / 2
+    cy = y + size / 2                     # y 始终是文字顶部（对齐 html top）；center 只切换水平锚
+    paste_center(base, layer, int(round(cx)), int(round(cy)))
+
+
 def outline_text(
     draw: ImageDraw.ImageDraw,
     xy,

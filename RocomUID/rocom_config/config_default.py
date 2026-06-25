@@ -44,6 +44,24 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
             "远区商人",
         ],
     ),
+    "RC_egg_render_style": GsStrConfig(
+        "查蛋渲染样式",
+        "选择查蛋结果以图片或文字呈现",
+        "图片版",
+        options=[
+            "图片版",
+            "文字版",
+        ],
+    ),
+    "RC_garden_render_style": GsStrConfig(
+        "菜园渲染样式",
+        "选择菜园(种植)信息渲染模板：新版(图文卡片) 或 旧版",
+        "新版",
+        options=[
+            "新版",
+            "旧版",
+        ],
+    ),
     "RC_home_use_qq_avatar": GsBoolConfig(
         "家园信息使用用户头像",
         "开启后家园信息头像使用查询者头像；关闭后固定使用默认头像",
