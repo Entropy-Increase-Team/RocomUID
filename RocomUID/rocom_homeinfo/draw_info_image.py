@@ -60,6 +60,16 @@ def format_egg_time_text(target_time: int, now_time: int) -> str:
         day_mes = f'{target_dt.month}月{target_dt.day}日'
     return f'{day_mes}{target_dt.hour}点{target_dt.minute}分'
 
+
+# 喂食状态：接口 home_pet_info.status（旧的 feed_info 计时字段已被服务端移除）
+_FEED_STATUS = {1700: '未喂食', 1701: '喂养中', 1702: '可收取灵感', 1704: '空闲'}
+
+
+def feed_status_text(status: int) -> str:
+    """把接口 status 码映射为喂食状态文案，未知码兜底为「未喂食」。"""
+    code = int(status or 0)
+    return _FEED_STATUS[code] if code in _FEED_STATUS else '未喂食'
+
 async def draw_home_info(ev, uid, home_info, show_pets: bool = True, show_plants: bool = True):
     bg_height = 460
     pet_list_height = math.ceil(len(home_info.home_pets) / 2) * 192 if show_pets else 0
@@ -222,50 +232,14 @@ async def draw_home_info(ev, uid, home_info, show_pets: bool = True, show_plants
                         'lm',
                     )
 
-            if pet_info.pet_rip_time != 0:
-                pet_rip_time = pet_info.pet_rip_time
-                jindu_tc = Image.open(TEXT_PATH / 'jindu_tc.png').convert('RGBA').resize((270, 13))
-                pet_img.paste(jindu_tc, (166, progress_bar_y), jindu_tc)
-                if now_time >= pet_rip_time:
-                    pet_draw.text(
-                        (166, pet_status_y),
-                        f'灵感已收集完成',
-                        (255, 255, 255),
-                        rc_font_28,
-                        'lm',
-                    )
-                    jindu_len = 270
-                else:
-                    dt1 = datetime.utcfromtimestamp(now_time)
-                    dt2 = datetime.utcfromtimestamp(pet_rip_time)
-                    # 计算两个时间点之间的差异
-                    delta = dt2 - dt1
-                    # 提取小时和分钟
-                    days = delta.days
-                    day_mes = ''
-                    if days > 0:
-                        day_mes = f"{days}天"
-                    hours = delta.seconds // 3600
-                    minutes = (delta.seconds % 3600) // 60
-                    pet_draw.text(
-                        (166, pet_status_y),
-                        f'{day_mes}{hours}时{minutes}分',
-                        (255, 255, 255),
-                        rc_font_28,
-                        'lm',
-                    )
-                    jindu_zhanbi = (pet_info.time_cost - (pet_rip_time - now_time)) / pet_info.time_cost
-                    jindu_len = max(5, int(269 * jindu_zhanbi) + 1)
-                jindu_bar = Image.open(TEXT_PATH / 'jindu_bar.png').convert('RGBA').resize((jindu_len, 13))
-                pet_img.paste(jindu_bar, (166, progress_bar_y), jindu_bar)
-            else:
-                pet_draw.text(
-                    (166, pet_status_y),
-                    f'未喂食',
-                    (255, 255, 255),
-                    rc_font_28,
-                    'lm',
-                )
+            # 喂食状态改读接口 status（旧 feed_info/pet_rip_time 计时已被服务端移除，无法再算进度条）
+            pet_draw.text(
+                (166, pet_status_y),
+                feed_status_text(pet_info.status),
+                (255, 255, 255),
+                rc_font_28,
+                'lm',
+            )
 
             level_img = Image.open(TEXT_PATH / f'level_icon.png').convert('RGBA')
             level_draw = ImageDraw.Draw(level_img)

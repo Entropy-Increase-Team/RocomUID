@@ -5,8 +5,10 @@ from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from ..utils.map.rocom_map import rocom_name_list, rocom_group_list, rocom_list, rocom_skill_list, characteristic_list, skill_list, rocom_egg_build
 from .draw_info_image import draw_rocom_info
+from .draw_egg_image import draw_egg_info
 from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name, rocom_egg_conf,get_pet_info,pet_list
+from ..rocom_config.rocom_config import RC_CONFIG
 
 async def is_numeric(string):
     try:
@@ -50,21 +52,29 @@ async def get_rocom_egg_name(bot: Bot, ev: Event):
             find_flag = find_flag + 1
         if item['breeding']['weight_low'] <= float(weight) * 1000 and float(weight) * 1000 <= item['breeding']['weight_high']:
             find_flag = find_flag + 1
-        if find_flag == 2 and item["name"] not in find_list:
-            find_list.append(item["name"])
-    if len(find_list) == 0:
+        if find_flag == 2 and item["name"] not in [n for _, n in find_list]:
+            find_list.append((pet_id, item["name"]))
+    # 渲染样式：图片版（默认，我的出图）/ 文字版，控制台 RC_egg_render_style 可切
+    render_style = str(RC_CONFIG.get_config('RC_egg_render_style').data or '图片版')
+    if render_style != '文字版':
+        im = await draw_egg_info(
+            {"length": length, "weight": weight, "egg_type": egg_type}, find_list)
+        return await bot.send(im, at_sender=True)
+    # 文字版
+    names = [n for _, n in find_list]
+    if len(names) == 0:
         mes = "暂时没有找到该精灵蛋的匹配信息"
     else:
         mes = f"【查找条件】 \n尺寸：{length}m 重量：{weight}kg\n类型【{egg_type}精灵蛋】\n该精灵蛋有可能出生的精灵为\n"
         shuling = 1
-        for rocomname in find_list:
+        for rocomname in names:
             mes += f"{rocomname}"
             if shuling == 4:
                 shuling = 1
                 mes += '\n'
             else:
                 shuling = shuling + 1
-                if rocomname != find_list[len(find_list) - 1]:
+                if rocomname != names[len(names) - 1]:
                     mes += '、'
         mes += f"\n范围还在更新中，结果仅供参考\n可输入{P}查蛋 [尺寸] [重量] [炫彩/同乘(可选)]查询精灵蛋信息"
     return await bot.send(mes, at_sender=True)

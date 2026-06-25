@@ -79,6 +79,9 @@ async def api_to_dict_home_info(
             'pet_rip_time': 0,
             'have_egg': petinfo['have_egg'],
             'predicted_egg_time': petinfo.get('predicted_egg_time', 0),
+            'status': petinfo['home_pet_info'].get('status', 0),
+            'nature': petinfo['display_info'].get('nature', 0),
+            'blood_id': petinfo['display_info'].get('blood_id', 0),
         }
 
         if petinfo['home_pet_info'].get('feed_info', 0) != 0:

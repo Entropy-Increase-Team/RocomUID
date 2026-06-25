@@ -78,6 +78,9 @@ class HomePetInfo(Struct):
     pet_rip_time: int
     have_egg: bool
     predicted_egg_time: int = 0
+    status: int = 0      # 喂食状态：1700尚未喂食/1701喂养中/1702可收集/1704空闲
+    nature: int = 0      # 性格 id
+    blood_id: int = 0    # 属性/血脉 id（→ filters bloodList / 出图血脉卡片）
 
 
 class HomePlantStaticInfo(Struct):

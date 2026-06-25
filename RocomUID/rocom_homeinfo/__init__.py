@@ -14,6 +14,8 @@ from ..utils.models import HomeInfo
 from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..utils.to_data import api_to_dict_home_info
 from .draw_info_image import draw_home_info
+from .draw_home_image import draw_home_image
+from .draw_garden_image import draw_garden_image
 
 sv_home_info = SV('rc家园事件', priority=5)
 
@@ -60,30 +62,48 @@ async def get_my_home_info(uid: str):
     return await api_to_dict_home_info(uid, PLAYER_PATH)
 
 
-@sv_home_info.on_command(('家园', '菜园'))
-async def get_my_home_info_wegame(bot: Bot, ev: Event):
-    command = str(getattr(ev, 'command', '')).strip()
-    if '菜园' in command:
-        await send_home_info(bot, ev, '菜园', False, True)
-    else:
-        show_plants = not is_config_enabled('RC_home_separate_garden')
-        await send_home_info(bot, ev, '家园', True, show_plants)
-
-
-async def send_home_info(bot: Bot, ev: Event, info_name: str, show_pets: bool, show_plants: bool):
+async def _resolve_uid(bot: Bot, ev: Event):
+    """解析 UID：消息参数优先，否则取绑定。失败已回错误消息并返回 None。"""
     args = ev.text.split()
     if len(args) < 1:
         uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
         if not uid:
-            return await bot.send('你还没有绑定RC_UID哦!')
+            await bot.send('你还没有绑定RC_UID哦!')
+            return None
     else:
         uid = args[0]
     if uid and not uid.isdigit():
-        return await bot.send('请输入正确的UID格式!')
+        await bot.send('请输入正确的UID格式!')
+        return None
+    return uid
+
+
+async def _draw_garden(ev: Event, uid: str, home_info) -> bytes:
+    """菜园(种植)出图：按 RC_garden_render_style 选新版纯 PIL / 旧 PIL 回退。"""
+    if RC_CONFIG.get_config('RC_garden_render_style').data == '新版':
+        return await draw_garden_image(ev, uid, home_info, False, True)
+    return await draw_home_info(ev, uid, home_info, False, True)
+
+
+@sv_home_info.on_command(('家园', '菜园'))
+async def get_my_home_info_wegame(bot: Bot, ev: Event):
+    is_garden = '菜园' in ev.command
+    info_name = '菜园' if is_garden else '家园'
+
+    uid = await _resolve_uid(bot, ev)
+    if uid is None:
+        return
     await bot.send(f'正在获取[UID]{uid}的{info_name}信息，请稍后')
 
-    home_info = await get_my_home_info(uid)
+    home_info = await get_my_home_info(uid)   # 单次获取，两张图共用
     if isinstance(home_info, str):
         return await bot.send(home_info)
-    im = await draw_home_info(ev, uid, home_info, show_pets, show_plants)
-    await bot.send(im)
+
+    if is_garden:                              # 菜园 → 一张种植图
+        return await bot.send(await _draw_garden(ev, uid, home_info))
+
+    # 家园 → 精灵图（永远只画精灵）；未开「家园隐藏菜园」时再追发一张菜园图
+    # （旧模板靠 show_plants 合并成一张，新版两套独立画布故拆两张发）
+    await bot.send(await draw_home_image(ev, uid, home_info, True, False))
+    if not is_config_enabled('RC_home_separate_garden'):
+        await bot.send(await _draw_garden(ev, uid, home_info))
