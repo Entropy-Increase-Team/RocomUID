@@ -54,8 +54,8 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
         ],
     ),
     "RC_garden_render_style": GsStrConfig(
-        "菜园渲染样式",
-        "选择菜园(种植)信息渲染模板：新版(图文卡片) 或 旧版",
+        "家园/菜园渲染样式",
+        "选择家园/菜园信息渲染模板：新版 或 旧版",
         "新版",
         options=[
             "新版",

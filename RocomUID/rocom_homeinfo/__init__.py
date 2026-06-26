@@ -78,9 +78,13 @@ async def _resolve_uid(bot: Bot, ev: Event):
     return uid
 
 
+def is_new_home_render_style() -> bool:
+    return RC_CONFIG.get_config('RC_garden_render_style').data == '新版'
+
+
 async def _draw_garden(ev: Event, uid: str, home_info) -> bytes:
-    """菜园(种植)出图：按 RC_garden_render_style 选新版纯 PIL / 旧 PIL 回退。"""
-    if RC_CONFIG.get_config('RC_garden_render_style').data == '新版':
+    """菜园(种植)出图：按家园/菜园渲染样式选择渲染样式。"""
+    if is_new_home_render_style():
         return await draw_garden_image(ev, uid, home_info, False, True)
     return await draw_home_info(ev, uid, home_info, False, True)
 
@@ -102,8 +106,20 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
     if is_garden:                              # 菜园 → 一张种植图
         return await bot.send(await _draw_garden(ev, uid, home_info))
 
-    # 家园 → 精灵图（永远只画精灵）；未开「家园隐藏菜园」时再追发一张菜园图
-    # （旧模板靠 show_plants 合并成一张，新版两套独立画布故拆两张发）
-    await bot.send(await draw_home_image(ev, uid, home_info, True, False))
-    if not is_config_enabled('RC_home_separate_garden'):
-        await bot.send(await _draw_garden(ev, uid, home_info))
+    if is_new_home_render_style():
+        # 家园 → 精灵图；未开「家园隐藏菜园」时再追发一张菜园图
+        await bot.send(await draw_home_image(ev, uid, home_info, True, False))
+        if not is_config_enabled('RC_home_separate_garden'):
+            await bot.send(await _draw_garden(ev, uid, home_info))
+        return
+
+    # 旧版家园模板：按「家园隐藏菜园」决定是否合并显示菜园信息
+    await bot.send(
+        await draw_home_info(
+            ev,
+            uid,
+            home_info,
+            True,
+            not is_config_enabled('RC_home_separate_garden'),
+        )
+    )
