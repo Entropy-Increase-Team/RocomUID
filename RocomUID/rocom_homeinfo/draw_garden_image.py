@@ -151,7 +151,7 @@ def _render(uid, home_info, head_img: Image.Image) -> Image.Image:
     exp_t = f'{round(exp / 10000, 2)}w' if exp >= 100000 else str(exp)
     # 4 个数值水平居中于各栏中心（位数变化也对称、不偏不溢出）
     vals = [(204, 289, home_info.room_level), (422, 281, home_info.home_level),
-            (654, 270, exp_t), (875, 261, home_info.home_comfort_level)]
+            (654, 272, exp_t), (875, 261, home_info.home_comfort_level)]
     for x, y, v in vals:
         ft.paste_text(base, x, y, str(v), 37, '#4d392d', rot=-2.5, center=True)
     labels = [(167, 346, '小屋等级'), (387, 337, '家园等级'),
