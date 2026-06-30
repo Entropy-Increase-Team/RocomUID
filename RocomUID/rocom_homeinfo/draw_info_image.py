@@ -61,12 +61,28 @@ def format_egg_time_text(target_time: int, now_time: int) -> str:
     return f'{day_mes}{target_dt.hour}点{target_dt.minute}分'
 
 
-# 喂食状态：接口 home_pet_info.status（旧的 feed_info 计时字段已被服务端移除）
+def format_feed_countdown_text(target_time: int, now_time: int) -> str:
+    remaining_seconds = max(0, target_time - now_time)
+    days = remaining_seconds // 86400
+    hours = (remaining_seconds % 86400) // 3600
+    minutes = (remaining_seconds % 3600) // 60
+    seconds = remaining_seconds % 60
+
+    if remaining_seconds < 60:
+        return f'{seconds}秒'
+
+    day_mes = f'{days}天' if days > 0 else ''
+    return f'{day_mes}{hours}时{minutes}分'
+
+
 _FEED_STATUS = {1700: '未喂食', 1701: '喂养中', 1702: '可收取灵感', 1704: '空闲'}
 
 
-def feed_status_text(status: int) -> str:
-    """把接口 status 码映射为喂食状态文案，未知码兜底为「未喂食」。"""
+def feed_status_text(status: int, pet_rip_time: int, now_time: int) -> str:
+    rip_time = int(pet_rip_time or 0)
+    if rip_time > now_time:
+        return f'喂养中 {format_feed_countdown_text(rip_time, now_time)}'
+
     code = int(status or 0)
     return _FEED_STATUS[code] if code in _FEED_STATUS else '未喂食'
 
@@ -232,10 +248,9 @@ async def draw_home_info(ev, uid, home_info, show_pets: bool = True, show_plants
                         'lm',
                     )
 
-            # 喂食状态改读接口 status（旧 feed_info/pet_rip_time 计时已被服务端移除，无法再算进度条）
             pet_draw.text(
                 (166, pet_status_y),
-                feed_status_text(pet_info.status),
+                feed_status_text(pet_info.status, pet_info.pet_rip_time, now_time),
                 (255, 255, 255),
                 rc_font_28,
                 'lm',
