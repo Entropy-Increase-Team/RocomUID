@@ -78,10 +78,15 @@ def format_feed_countdown_text(target_time: int, now_time: int) -> str:
 _FEED_STATUS = {1700: '未喂食', 1701: '喂养中', 1702: '可收取灵感', 1704: '空闲'}
 
 
-def feed_status_text(status: int, pet_rip_time: int, now_time: int) -> str:
+def feed_status_text(
+    status: int,
+    pet_rip_time: int = 0,
+    now_time: int = 0,
+) -> str:
     rip_time = int(pet_rip_time or 0)
-    if rip_time > now_time:
-        return f'喂养中 {format_feed_countdown_text(rip_time, now_time)}'
+    current_time = int(now_time or 0)
+    if rip_time > current_time > 0:
+        return f'喂养中 {format_feed_countdown_text(rip_time, current_time)}'
 
     code = int(status or 0)
     return _FEED_STATUS[code] if code in _FEED_STATUS else '未喂食'
