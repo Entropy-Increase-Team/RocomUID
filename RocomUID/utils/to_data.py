@@ -85,10 +85,12 @@ async def api_to_dict_home_info(
         }
 
         if petinfo['home_pet_info'].get('feed_info', 0) != 0:
-            pet_record["time_cost"] = int(petinfo['home_pet_info']['feed_info']['time_cost'] / 1000000)
+            begin_time = int(petinfo['home_pet_info']['feed_info']['begin_time'])
+            time_cost = int(petinfo['home_pet_info']['feed_info']['time_cost'])
+            pet_record["time_cost"] = time_cost // 1000000
             pet_record['pet_rip_time'] = (
-                int(petinfo['home_pet_info']['feed_info']['begin_time'] / 1000000)
-                + int(petinfo['home_pet_info']['feed_info']['time_cost'] / 1000000)
+                begin_time // 1000000
+                + time_cost // 1000000
             )
 
         home_info["home_pets"].append(pet_record)
