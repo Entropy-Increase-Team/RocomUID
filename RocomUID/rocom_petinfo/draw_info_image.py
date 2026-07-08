@@ -4,10 +4,11 @@ from pathlib import Path
 import os
 import copy
 import time
+import json
 from PIL import Image, ImageDraw, ImageChops
 from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
-from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
+from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH, PLAYER_PATH
 from ..utils.map.rocom_map import skill_list
 from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
 from ..utils.convert import get_pet_info, get_skill_info
@@ -458,6 +459,14 @@ def _draw_home_badge(text: str):
     badge_draw.text((badge_w / 2, badge_h / 2 + 1), text, (255, 255, 255), rc_font_14, 'mm')
     return badge
 
+def _get_home_name(uid: str) -> str:
+    pet_info_path = PLAYER_PATH / uid / 'pet_info.json'
+    if os.path.exists(pet_info_path):
+        with Path.open(pet_info_path, encoding='utf-8') as f:
+            pet_data = json.load(f)
+            return pet_data.get('home_name') or '未命名家园'
+    return '未命名家园'
+
 async def _draw_home_skill(skill, size: str = 'small'):
     info_skill = await get_skill_info(skill.id)
     family = info_skill.get('families', '无')
@@ -511,7 +520,8 @@ async def _draw_home_skill(skill, size: str = 'small'):
     jineng_draw.text(cost_xy, f"{info_skill.get('cost', 0)}", (255, 255, 255), cost_font, 'lm')
     return jineng_temp
 
-async def draw_pet_home(uid, pet_data, home_name='未命名家园'):
+async def draw_pet_home(uid, pet_data):
+    home_name = _get_home_name(uid)
     pet_items = list(pet_data.items())
     card_h = 420
     bg_height = max(850, 360 + len(pet_items) * card_h + 70)

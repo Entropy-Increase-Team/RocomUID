@@ -121,7 +121,6 @@ async def api_to_dict_home_info(
 async def api_to_dict_pet_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
-    include_home_name: bool = False,
 ):
     home_data = await wegame_api.get_home_pet_data(uid)
     if home_data is None:
@@ -258,6 +257,4 @@ async def api_to_dict_pet_info(
             _ = file.write(msgjson.format(msgjson.encode(msgspec.to_builtins(pet_info)), indent=4))
 
     pet_info_map = convert_pet_info_map(pet_info["pets_list"])
-    if include_home_name:
-        return pet_info_map, pet_info['home_name']
     return pet_info_map

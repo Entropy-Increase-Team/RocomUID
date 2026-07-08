@@ -79,10 +79,7 @@ def load_pet_cache(uid: str):
     with Path.open(pet_info_path, encoding='utf-8') as f:
         pet_data = json.load(f)
 
-    return (
-        convert_pet_info_map(pet_data['pets_list']),
-        pet_data.get('home_name') or '未命名家园',
-    )
+    return convert_pet_info_map(pet_data['pets_list'])
 
 
 async def get_my_pet_info_data(uid: str):
@@ -91,7 +88,7 @@ async def get_my_pet_info_data(uid: str):
         if local_pet_data is not None:
             return local_pet_data
 
-    return await api_to_dict_pet_info(uid, PLAYER_PATH, include_home_name=True)
+    return await api_to_dict_pet_info(uid, PLAYER_PATH)
 
 
 async def _resolve_uid(bot: Bot, ev: Event, text=None):
@@ -137,12 +134,10 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
         pet_result = await get_my_pet_info_data(uid)
         if isinstance(pet_result, str):
             return await bot.send(pet_result)
-        pet_data, home_name = pet_result
-        if isinstance(pet_data, str):
-            return await bot.send(pet_data)
+        pet_data = pet_result
         if len(pet_data.keys()) == 0:
             return await bot.send('您的家园中没有可显示的精灵数据。')
-        return await bot.send(await draw_pet_home(uid, pet_data, home_name))
+        return await bot.send(await draw_pet_home(uid, pet_data))
 
     home_info = await get_my_home_info(uid)   # 单次获取，两张图共用
     if isinstance(home_info, str):
