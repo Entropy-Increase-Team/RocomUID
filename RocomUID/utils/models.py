@@ -152,6 +152,7 @@ class PetPanelInfo(Struct):
     skills: List[PetSkillInfo]
     feature: PetFeatureInfo
     glass_info: Any
+    voice: Any = None
 
 
 PetInfoMap = Dict[str, PetPanelInfo]

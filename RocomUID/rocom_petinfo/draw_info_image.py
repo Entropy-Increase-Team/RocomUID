@@ -9,7 +9,7 @@ from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
-from ..utils.fonts.rocom_fonts import rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, rc_font_22, rc_font_28, rc_font_44, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
+from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
 from ..utils.convert import get_pet_info, get_skill_info
 from ..utils.error_reply import prefix
 
@@ -34,6 +34,7 @@ cost_star = Image.open(TEXT_PATH / 'star.png')
 star_cost = Image.open(TEXT_PATH / 'star.png').convert('RGBA').resize((45, 46))
 footer = Image.open(TEXT_PATH / 'footer.png')
 info_text_color = (100, 92, 79)
+home_title_small = rocom_title.resize((int(rocom_title.width * 0.8), int(rocom_title.height * 0.8)))
 
 SHUX_LIST_XX = ['物攻', '魔攻', '物防', '魔防', '速度']
 SHUX_SKILLLIST_DRAW = {
@@ -110,6 +111,18 @@ tag_w_add = [0, 132, 143]
 tag_title = ['HP', '物攻', '魔攻', '物防', '魔防', '速度']
 
 attribute_tag = ['value', 'talent', 'effort_add']
+
+def _get_attr_draw_info(shuxing):
+    if shuxing in SHUX_LIST_DRAW:
+        color, name = SHUX_LIST_DRAW[shuxing]
+        return color, name, str(shuxing)
+    if isinstance(shuxing, str):
+        for attr_id, (color, name) in SHUX_LIST_DRAW.items():
+            if shuxing == name:
+                return color, name, shuxing
+        if shuxing in SHUX_SKILLLIST_DRAW:
+            return SHUX_SKILLLIST_DRAW[shuxing], shuxing, shuxing
+    return SHUX_SKILLLIST_DRAW['无'], str(shuxing), '无'
 
 async def draw_pet_info(uid, pet_data):
     bg_height = 970
@@ -414,6 +427,223 @@ async def draw_pet_info(uid, pet_data):
         start_height += (jn_y + 1) * 99 + 10
     
     
+    img.paste(footer, (370, bg_height - 44), footer)
+    res = await convert_img(img)
+    return res
+
+def _safe_open(path: Path, fallback: Path) -> Image.Image:
+    if os.path.exists(path):
+        return Image.open(path).convert('RGBA')
+    return Image.open(fallback).convert('RGBA')
+
+def _get_voice_badge_text(pet_info):
+    voice = getattr(pet_info, 'voice', None)
+    if voice is None:
+        return None
+    try:
+        voice_num = int(voice)
+    except (TypeError, ValueError):
+        return None
+    if 96 <= voice_num <= 100:
+        return '婉转声'
+    if -100 <= voice_num <= -96:
+        return '粗嗓门'
+    return f'{voice_num}db'
+
+def _draw_home_badge(text: str):
+    badge_w = 90
+    badge_h = 28
+    badge = tags_img.resize((badge_w, badge_h)).convert('RGBA')
+    badge_draw = ImageDraw.Draw(badge)
+    badge_draw.text((badge_w / 2, badge_h / 2 + 1), text, (255, 255, 255), rc_font_14, 'mm')
+    return badge
+
+async def _draw_home_skill(skill, size: str = 'small'):
+    info_skill = await get_skill_info(skill.id)
+    family = info_skill.get('families', '无')
+    if family == 'SDT_NONE':
+        family = '无'
+    bg_color = SHUX_SKILLLIST_DRAW.get(family, SHUX_SKILLLIST_DRAW['无'])
+    if size == 'equip':
+        card_w, card_h = 160, 64
+        icon_size = 54
+        family_size = 34
+        name_font = skill_font_16
+        cost_font = skill_font_16
+        name_xy = (66, 24)
+        star_xy = (127, 36)
+        cost_xy = (66, 47)
+    else:
+        card_w, card_h = 130, 62
+        icon_size = 47
+        family_size = 30
+        name_font = skill_font_16
+        cost_font = skill_font_16
+        name_xy = (58, 22)
+        star_xy = (102, 32)
+        cost_xy = (58, 42)
+
+    skill_card_bg = skill_bg.resize((card_w, card_h))
+    jineng_img = Image.new('RGBA', (card_w, card_h), bg_color)
+    jineng_temp = Image.new('RGBA', (card_w, card_h))
+    jineng_temp.paste(jineng_img, (0, 0), skill_card_bg)
+
+    icon_path = ROCOM_SKILL_PATH / f"{skill.iconid}.png"
+    if not os.path.exists(icon_path):
+        icon_path = ROCOM_SKILL_PATH / f"{skill.id}.png"
+    if not os.path.exists(icon_path):
+        icon_path = ROCOM_SKILL_PATH / 'img_linshi.png'
+    skill_image = Image.open(icon_path).convert('RGBA').resize((icon_size, icon_size))
+    jineng_temp.paste(skill_image, (10, int((card_h - icon_size) / 2)), skill_image)
+
+    family_icon = TEXT_PATH / '属性' / f"{family}.png"
+    if not os.path.exists(family_icon):
+        family_icon = TEXT_PATH / '属性' / '2.png'
+    sx_image = Image.open(family_icon).convert('RGBA').resize((family_size, family_size))
+    jineng_temp.paste(sx_image, (-4, -4), sx_image)
+
+    jineng_draw = ImageDraw.Draw(jineng_temp)
+    max_name_len = 4
+    skill_name = skill.name if len(skill.name) <= max_name_len else f'{skill.name[:max_name_len]}…'
+    jineng_draw.text(name_xy, skill_name, (255, 255, 255), name_font, 'lm')
+    star_img = cost_star.resize((18, 18))
+    jineng_temp.paste(star_img, star_xy, star_img)
+    jineng_draw.text(cost_xy, f"{info_skill.get('cost', 0)}", (255, 255, 255), cost_font, 'lm')
+    return jineng_temp
+
+async def draw_pet_home(uid, pet_data, home_name='未命名家园'):
+    pet_items = list(pet_data.items())
+    card_h = 420
+    bg_height = max(850, 360 + len(pet_items) * card_h + 70)
+    img = Image.open(TEXT_PATH / 'bg.jpg').convert('RGB')
+    if bg_height > 2417:
+        img = img.resize((1200, bg_height))
+    else:
+        img = img.crop((0, 0, 1200, bg_height))
+
+    img.paste(info_title_img, (0, 0), info_title_img)
+    img_draw = ImageDraw.Draw(img)
+    img_draw.text((600, 96), '精灵状态', (255, 255, 255), rc_font_72, 'mm')
+
+    title_bar = Image.new('RGBA', (960, 105), (218, 213, 194, 180))
+    title_mask = Image.new('L', (960, 105), 0)
+    ImageDraw.Draw(title_mask).rounded_rectangle((0, 0, 960, 105), radius=52, fill=255)
+    img.paste(title_bar, (120, 205), title_mask)
+    img_draw.text((600, 258), f'{home_name}的小屋', info_text_color, rc_font_44, 'mm')
+    img_draw.text((1050, 281), f'UID{uid}', info_text_color, rc_font_30, 'rm')
+
+    for pet_index, (gid, pet_info) in enumerate(pet_items):
+        y0 = 350 + pet_index * card_h
+        pet_base = await get_pet_info(pet_info.pet_id)
+        pet_name = f'{pet_info.name}{gid}'
+        name_bar = Image.new('RGBA', (250, 66), (218, 213, 194, 165))
+        name_mask = Image.new('L', (250, 66), 0)
+        ImageDraw.Draw(name_mask).rounded_rectangle((0, 0, 250, 66), radius=33, fill=255)
+        img.paste(name_bar, (6, y0 + 10), name_mask)
+        img_draw.text((131, y0 + 43), pet_name, info_text_color, rc_font_22, 'mm')
+
+        pet_icon_name = pet_base['icon']
+        if pet_info.mutation_type in [9, 1]:
+            pet_icon_name = pet_base['icon'] + '_yise'
+        pet_head_icon = ROCOM_ICON_PATH / f'{pet_icon_name}.png'
+        if not os.path.exists(pet_head_icon):
+            pet_head_icon = ROCOM_HEAD_PATH / 'dimo.png'
+        first_attr = pet_base.get('unit_type_list', pet_base.get('unit_type', [2]))[0]
+        pet_bg_img = Image.new('RGBA', (235, 235), _get_attr_draw_info(first_attr)[0])
+        pet_bg_small = pet_bg_mask.resize((235, 235))
+        img.paste(pet_bg_img, (18, y0 + 88), pet_bg_small)
+        pokemon_img = Image.open(pet_head_icon).convert('RGBA').resize((230, 230))
+        img.paste(pokemon_img, (20, y0 + 90), pokemon_img)
+        voice_badge_text = _get_voice_badge_text(pet_info)
+        if voice_badge_text:
+            voice_badge = _draw_home_badge(voice_badge_text)
+            img.paste(voice_badge, (10, y0 + 84), voice_badge)
+        if pet_info.mutation_type in [1, 8, 9]:
+            star_img = Image.open(TEXT_PATH / f'star_{pet_info.mutation_type}.png').convert('RGBA').resize((68, 68))
+            img.paste(star_img, (198, y0 + 270), star_img)
+
+        img.paste(home_title_small, (276, y0 + 4), home_title_small)
+        img_draw.text((329, y0 + 27), '精灵属性', (255, 255, 255), rc_font_16, 'lm')
+        table_small = table_img.resize((250, 174))
+        img.paste(table_small, (273, y0 + 55), table_small)
+        attribute_items = [
+            pet_info.attribute_info.pethp,
+            pet_info.attribute_info.petatk,
+            pet_info.attribute_info.petspatk,
+            pet_info.attribute_info.petdef,
+            pet_info.attribute_info.petspdef,
+            pet_info.attribute_info.petspd,
+        ]
+        attr_icon = ['HP', '物攻', '魔攻', '物防', '魔防', '速度']
+        for i, sx_item in enumerate(attribute_items):
+            row_y = y0 + 98 + i * 24
+            img_draw.text((310, row_y), attr_icon[i], info_text_color, rc_font_18, 'lm')
+            for j, key in enumerate(attribute_tag):
+                tag_small = tags_img.resize((52, 20))
+                x = 360 + j * 58
+                tag_y = row_y - 11
+                img.paste(tag_small, (x, tag_y), tag_small)
+                img_draw.text((x + 26, tag_y + 10), f"{getattr(sx_item, key)}", (240, 236, 225), rc_font_18, 'mm')
+
+        shux_num = 0
+        for shul, shuxing in enumerate(pet_base['unit_type']):
+            attr_color, attr_name, attr_icon = _get_attr_draw_info(shuxing)
+            attr_tag_w = 92
+            attr_tag_h = 25
+            attr_tag_gap = 96
+            attr_tag_x = 283 + attr_tag_gap * shul
+            shuxing_img = Image.new('RGBA', (attr_tag_w, attr_tag_h), attr_color)
+            sx_image = Image.open(TEXT_PATH / '属性' / f'{attr_icon}.png').convert('RGBA').resize((25, 25))
+            shuxing_img.paste(sx_image, (-2, 0), sx_image)
+            shuxing_temp = Image.new('RGBA', (attr_tag_w, attr_tag_h))
+            shuxing_temp.paste(shuxing_img, (0, 0), mask_bar.resize((attr_tag_w, attr_tag_h)))
+            ImageDraw.Draw(shuxing_temp).text((54, 13), f'{attr_name}', (255, 255, 255), rc_font_18, 'mm')
+            img.paste(shuxing_temp, (attr_tag_x, y0 + 238), shuxing_temp)
+            shux_num = shul
+        shux_num += 1
+        if pet_info.blood_id in XUEMAI_LIST_DRAW:
+            attr_tag_w = 92
+            attr_tag_h = 25
+            attr_tag_gap = 96
+            attr_tag_x = 283 + attr_tag_gap * shux_num
+            shuxing_img = Image.new('RGBA', (attr_tag_w, attr_tag_h), XUEMAI_LIST_DRAW[pet_info.blood_id][0])
+            sx_image = Image.open(TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png').convert('RGBA').resize((25, 25))
+            shuxing_img.paste(sx_image, (-2, 0), sx_image)
+            shuxing_temp = Image.new('RGBA', (attr_tag_w, attr_tag_h))
+            shuxing_temp.paste(shuxing_img, (0, 0), mask_bar.resize((attr_tag_w, attr_tag_h)))
+            ImageDraw.Draw(shuxing_temp).text((54, 13), f"{XUEMAI_LIST_DRAW[pet_info.blood_id][1]}", (255, 255, 255), rc_font_18, 'mm')
+            img.paste(shuxing_temp, (attr_tag_x, y0 + 238), shuxing_temp)
+
+        img.paste(home_title_small, (276, y0 + 270), home_title_small)
+        img_draw.text((329, y0 + 293), '精灵特性', (255, 255, 255), rc_font_16, 'lm')
+        tx_icon = ROCOM_CHARACTER_PATH / f"{pet_info.feature.id}.png"
+        if not os.path.exists(tx_icon):
+            tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
+        tx_img = Image.open(tx_icon).convert('RGBA').resize((58, 58))
+        skill_mask_small = skill_mask.resize((58, 58))
+        img.paste(tx_img, (283, y0 + 322), skill_mask_small)
+        img_draw.text((354, y0 + 332), f"{pet_info.feature.name}", (0, 0, 0), rc_font_18, 'lm')
+        tx_lines = await get_text_line(f'{pet_info.feature.desc}', 14)
+        for line_i, line in enumerate(tx_lines[:4]):
+            img_draw.text((354, y0 + 353 + line_i * 16), line, info_text_color, rc_font_14, 'lm')
+
+        skill_area_x = 545
+        skill_title_x = skill_area_x - 5
+        img.paste(home_title_small, (skill_title_x, y0 + 4), home_title_small)
+        img_draw.text((skill_title_x + 53, y0 + 27), '装备技能', (255, 255, 255), rc_font_16, 'lm')
+        equip_skills = sorted(pet_info.equip_skills, key=lambda item: item.pos)
+        for i, skill in enumerate(equip_skills[:4]):
+            skill_img = await _draw_home_skill(skill, 'equip')
+            img.paste(skill_img, (skill_area_x + i * 160, y0 + 58), skill_img)
+
+        img.paste(home_title_small, (skill_title_x, y0 + 128), home_title_small)
+        img_draw.text((skill_title_x + 53, y0 + 151), '已学技能', (255, 255, 255), rc_font_16, 'lm')
+        for i, skill in enumerate(pet_info.skills[:17]):
+            row = math.floor(i / 5)
+            col = i - row * 5
+            skill_img = await _draw_home_skill(skill, 'small')
+            img.paste(skill_img, (skill_area_x + col * 128, y0 + 176 + row * 60), skill_img)
+
     img.paste(footer, (370, bg_height - 44), footer)
     res = await convert_img(img)
     return res

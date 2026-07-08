@@ -161,6 +161,19 @@ class TEXTAPI():
         )
         #print(f'{data}')
         return data
+
+    async def get_home_pet_data(self, uid: str):
+        """
+        获取家园精灵数据接口
+        """
+        params = {"uid": uid, "wait_ms": 20000}
+        data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/ingame/pet/data",
+            self._wegame_headers(),
+            params=params,
+        )
+        return data
     
     async def get_merchant_info_cs(self, shopid):
         params = {"shop_id": shopid, "wait_ms":5000}
@@ -575,6 +588,19 @@ class WegameApi():
             params=params,
         )
         #print(f'{data}')
+        return data
+
+    async def get_home_pet_data(self, uid: str):
+        """
+        获取家园精灵数据接口
+        """
+        params = {"uid": uid, "wait_ms": 20000}
+        data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/ingame/pet/data",
+            self._wegame_headers(),
+            params=params,
+        )
         return data
     
     async def get_merchant_info_cs(self, shopid):

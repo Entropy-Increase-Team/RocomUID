@@ -121,21 +121,22 @@ async def api_to_dict_home_info(
 async def api_to_dict_pet_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
+    include_home_name: bool = False,
 ):
-    home_data = await wegame_api.get_home_info(uid)
+    home_data = await wegame_api.get_home_pet_data(uid)
     if home_data is None:
         return await wegame_api._get_last_error()
 
-    pet_info_path = save_path / uid / 'pet_info.json' if save_path and uid else None
-    local_pet_info: Dict[str, object] = {}
-    if pet_info_path and os.path.exists(pet_info_path):
-        with Path.open(pet_info_path, encoding='utf-8') as f:
-            local_pet_info = json.load(f)
-
     homeinfo = home_data['home_info']
-    pet_info = local_pet_info
-    if pet_info.get('pets_list', 0) == 0:
-        pet_info['pets_list'] = {}
+    pet_info: Dict[str, object] = {'pets_list': {}}
+    friend_home_brief_info = homeinfo.get('friend_home_brief_info') or {}
+    pet_info['home_name'] = friend_home_brief_info.get('home_name') or '未命名家园'
+
+    npc_pet_map = {
+        str(item.get('pet_gid')): item
+        for item in home_data.get('npc_pets', [])
+        if item.get('pet_gid') is not None
+    }
 
     home_pets = homeinfo['friend_cell_home_brief_info']['home_pets']
     for petinfo in home_pets:
@@ -143,6 +144,7 @@ async def api_to_dict_pet_info(
             continue
 
         pet_gid = str(petinfo['home_pet_info']['pet_gid'])
+        npc_pet_info = npc_pet_map.get(pet_gid, {})
         pethp = petatk = petspatk = petdef = petspdef = petspd = 0
         for item in petinfo['display_info']['attribute_new_info']['addi_attr_data']:
             if item['type'] == 1:
@@ -164,10 +166,23 @@ async def api_to_dict_pet_info(
         for item in petinfo['display_info']['skill']['skill_data']:
             if item["type"] == 1:
                 info_skill = await get_skill_info(item["id"])
+                iconid = (
+                    item.get("iconid")
+                    or item.get("icon_id")
+                    or item.get("icon")
+                    or info_skill.get("iconid")
+                    or item["id"]
+                )
+                if not iconid:
+                    iconid = item["id"]
+                try:
+                    iconid = int(iconid)
+                except (TypeError, ValueError):
+                    iconid = int(item["id"])
                 skill_info = {
                     "id": item["id"],
                     "name": info_skill["name"],
-                    "iconid": item.get("iconid", item["id"]),
+                    "iconid": iconid,
                     "pos": item["pos"],
                     "is_equipped": item["is_equipped"],
                     "use_times": item["use_times"],
@@ -224,6 +239,12 @@ async def api_to_dict_pet_info(
             "skills": pet_skill,
             "feature": pet_feature,
             "glass_info": petinfo['display_info']['glass_info'],
+            "voice": (
+                npc_pet_info
+                .get('npc_pet', {})
+                .get('pet', {})
+                .get('voice')
+            ),
         }
 
         pet_info["pets_list"][pet_gid] = msgspec.to_builtins(
@@ -236,4 +257,7 @@ async def api_to_dict_pet_info(
         with Path.open(path / "pet_info.json", "wb") as file:
             _ = file.write(msgjson.format(msgjson.encode(msgspec.to_builtins(pet_info)), indent=4))
 
-    return convert_pet_info_map(pet_info["pets_list"])
+    pet_info_map = convert_pet_info_map(pet_info["pets_list"])
+    if include_home_name:
+        return pet_info_map, pet_info['home_name']
+    return pet_info_map

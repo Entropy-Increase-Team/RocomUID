@@ -15,9 +15,11 @@ def skill_font_origin(size: int) -> ImageFont.FreeTypeFont:
 def dundun_font_origin(size: int) -> ImageFont.FreeTypeFont:
     return ImageFont.truetype(str(DUNDUN_FONT_PATH), size=size)
 
+rc_font_10 = rocom_font_origin(10)
 rc_font_12 = rocom_font_origin(12)
 rc_font_14 = rocom_font_origin(14)
 rc_font_15 = rocom_font_origin(15)
+rc_font_16 = rocom_font_origin(16)
 rc_font_18 = rocom_font_origin(18)
 rc_font_20 = rocom_font_origin(20)
 rc_font_22 = rocom_font_origin(22)

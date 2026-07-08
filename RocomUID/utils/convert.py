@@ -93,6 +93,10 @@ async def get_plant_info(plantid):
 
 async def get_skill_info(skillid):
     skill_info = pet_skill_list[str(skillid)]
+    if 'iconid' not in skill_info:
+        skill_info['iconid'] = int(skillid)
+    elif isinstance(skill_info['iconid'], str) and skill_info['iconid'].isdigit():
+        skill_info['iconid'] = int(skill_info['iconid'])
     return skill_info
     
 async def get_pet_info(petid):
