@@ -438,7 +438,7 @@
         "icon": "JL_haixiuqiuqiu"
     },
     "3054": {
-        "name": "害羞球球",
+        "name": "蓝衣夜灵",
         "form": "",
         "unit_type": [
             8,
@@ -1861,7 +1861,7 @@
     },
     "3233": {
         "name": "加尔",
-        "form": "",
+        "form": "黑化的样子",
         "unit_type": [
             17
         ],
@@ -4341,8 +4341,8 @@
         "name": "噬影蚕",
         "form": "",
         "unit_type": [
-            17,
-            6
+            18,
+            13
         ],
         "icon": "JL_songzai"
     },
@@ -4350,8 +4350,8 @@
         "name": "吞噬",
         "form": "",
         "unit_type": [
-            17,
-            6
+            18,
+            13
         ],
         "icon": "JL_songzai"
     },
@@ -4642,7 +4642,7 @@
             5,
             16
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_jiayouhaikui"
     },
     "3660": {
         "name": "加油蟹",
@@ -4651,7 +4651,7 @@
             5,
             16
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_jiayouxie"
     },
     "3661": {
         "name": "脆鸣鸟",
@@ -4796,7 +4796,7 @@
             4,
             12
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_yanhuatuan"
     },
     "3678": {
         "name": "烟花伯爵",
@@ -4805,16 +4805,7 @@
             4,
             12
         ],
-        "icon": "JL_songzai"
-    },
-    "3679": {
-        "name": "蒸汽胖胖",
-        "form": "",
-        "unit_type": [
-            4,
-            5
-        ],
-        "icon": "JL_songzai"
+        "icon": "JL_yanhuabojue"
     },
     "3680": {
         "name": "蒸汽胖可",
@@ -4847,7 +4838,7 @@
         "unit_type": [
             17
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_gugumao"
     },
     "3684": {
         "name": "咕德帽帽",
@@ -4855,7 +4846,7 @@
         "unit_type": [
             17
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_gudemaomao"
     },
     "3685": {
         "name": "幽冥狐",
@@ -5060,7 +5051,7 @@
         "unit_type": [
             19
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_xiaoguxiang"
     },
     "3709": {
         "name": "巨鼓象",
@@ -5068,7 +5059,7 @@
         "unit_type": [
             19
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_juguxiang"
     },
     "3710": {
         "name": "咬咬小子",
@@ -5234,13 +5225,13 @@
         "icon": "JL_chixinyongshi"
     },
     "3729": {
-        "name": "猴唛仔",
+        "name": "猴麦仔",
         "form": "",
         "unit_type": [
             2,
             19
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_houmaizai"
     },
     "3730": {
         "name": "音碟吼",
@@ -5249,7 +5240,7 @@
             2,
             19
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_yindiehou"
     },
     "3731": {
         "name": "骨朵鸟",
@@ -5275,7 +5266,7 @@
         "unit_type": [
             19
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_wusibeibei"
     },
     "3734": {
         "name": "辉光幕机",
@@ -5283,33 +5274,33 @@
         "unit_type": [
             19
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_huiguangmuji"
     },
     "3735": {
-        "name": "机墓方舟",
+        "name": "机幕方舟",
         "form": "",
         "unit_type": [
             19
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_jimufangzhou"
     },
     "3736": {
         "name": "炫光迪迪",
         "form": "",
         "unit_type": [
-            20,
-            11
+            11,
+            6
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_xuanguangdidi"
     },
     "3737": {
         "name": "​​霹雳迪迪",
         "form": "",
         "unit_type": [
-            20,
-            11
+            11,
+            6
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_pilididi"
     },
     "3738": {
         "name": "小怂猫",
@@ -5328,20 +5319,20 @@
         "icon": "JL_numusongmao_yidi"
     },
     "3740": {
-        "name": "方方狐",
+        "name": "宝藏小狐",
         "form": "",
         "unit_type": [
             2
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_fangfanghu"
     },
     "3741": {
-        "name": "狐脸擦擦",
+        "name": "宝藏沙狐",
         "form": "",
         "unit_type": [
             2
         ],
-        "icon": "JL_chixinyongshi"
+        "icon": "JL_hulianchacha"
     },
     "3742": {
         "name": "鸭吉吉",
@@ -5358,7 +5349,7 @@
             5,
             16
         ],
-        "icon": "JL_songzai"
+        "icon": "JL_jiayouxiedanzhi"
     },
     "3744": {
         "name": "火红尾",
