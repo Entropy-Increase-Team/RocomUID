@@ -456,7 +456,12 @@ def _draw_home_badge(text: str):
     badge_h = 28
     badge = tags_img.resize((badge_w, badge_h)).convert('RGBA')
     badge_draw = ImageDraw.Draw(badge)
-    badge_draw.text((badge_w / 2, badge_h / 2 + 1), text, (255, 255, 255), rc_font_14, 'mm')
+    text_bbox = badge_draw.textbbox((0, 0), text, font=rc_font_14)
+    text_w = text_bbox[2] - text_bbox[0]
+    text_h = text_bbox[3] - text_bbox[1]
+    text_x = (badge_w - text_w) / 2 - text_bbox[0]
+    text_y = (badge_h - text_h) / 2 - text_bbox[1]
+    badge_draw.text((text_x, text_y), text, (255, 255, 255), rc_font_14)
     return badge
 
 def _get_home_name(uid: str) -> str:
@@ -595,33 +600,34 @@ async def draw_pet_home(uid, pet_data):
                 img.paste(tag_small, (x, tag_y), tag_small)
                 img_draw.text((x + 26, tag_y + 10), f"{getattr(sx_item, key)}", (240, 236, 225), rc_font_18, 'mm')
 
-        shux_num = 0
-        for shul, shuxing in enumerate(pet_base['unit_type']):
+        attr_badges = []
+        seen_attr_names = set()
+        for shuxing in pet_base['unit_type']:
             attr_color, attr_name, attr_icon = _get_attr_draw_info(shuxing)
-            attr_tag_w = 92
-            attr_tag_h = 25
-            attr_tag_gap = 96
+            if attr_name in seen_attr_names:
+                continue
+            seen_attr_names.add(attr_name)
+            attr_badges.append((attr_color, attr_name, TEXT_PATH / '属性' / f'{attr_icon}.png'))
+        if pet_info.blood_id in XUEMAI_LIST_DRAW:
+            blood_color, blood_name = XUEMAI_LIST_DRAW[pet_info.blood_id]
+            if blood_name not in seen_attr_names:
+                attr_badges.append((blood_color, blood_name, TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png'))
+
+        compact_attr_badges = len(attr_badges) >= 3
+        attr_tag_w = 82 if compact_attr_badges else 92
+        attr_tag_h = 25
+        attr_tag_gap = 84 if compact_attr_badges else 96
+        attr_icon_size = 23 if compact_attr_badges else 25
+        attr_text_x = 50 if compact_attr_badges else 54
+        attr_font = rc_font_16 if compact_attr_badges else rc_font_18
+        for shul, (attr_color, attr_name, attr_icon_path) in enumerate(attr_badges):
             attr_tag_x = 283 + attr_tag_gap * shul
             shuxing_img = Image.new('RGBA', (attr_tag_w, attr_tag_h), attr_color)
-            sx_image = Image.open(TEXT_PATH / '属性' / f'{attr_icon}.png').convert('RGBA').resize((25, 25))
+            sx_image = Image.open(attr_icon_path).convert('RGBA').resize((attr_icon_size, attr_icon_size))
             shuxing_img.paste(sx_image, (-2, 0), sx_image)
             shuxing_temp = Image.new('RGBA', (attr_tag_w, attr_tag_h))
             shuxing_temp.paste(shuxing_img, (0, 0), mask_bar.resize((attr_tag_w, attr_tag_h)))
-            ImageDraw.Draw(shuxing_temp).text((54, 13), f'{attr_name}', (255, 255, 255), rc_font_18, 'mm')
-            img.paste(shuxing_temp, (attr_tag_x, y0 + 238), shuxing_temp)
-            shux_num = shul
-        shux_num += 1
-        if pet_info.blood_id in XUEMAI_LIST_DRAW:
-            attr_tag_w = 92
-            attr_tag_h = 25
-            attr_tag_gap = 96
-            attr_tag_x = 283 + attr_tag_gap * shux_num
-            shuxing_img = Image.new('RGBA', (attr_tag_w, attr_tag_h), XUEMAI_LIST_DRAW[pet_info.blood_id][0])
-            sx_image = Image.open(TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png').convert('RGBA').resize((25, 25))
-            shuxing_img.paste(sx_image, (-2, 0), sx_image)
-            shuxing_temp = Image.new('RGBA', (attr_tag_w, attr_tag_h))
-            shuxing_temp.paste(shuxing_img, (0, 0), mask_bar.resize((attr_tag_w, attr_tag_h)))
-            ImageDraw.Draw(shuxing_temp).text((54, 13), f"{XUEMAI_LIST_DRAW[pet_info.blood_id][1]}", (255, 255, 255), rc_font_18, 'mm')
+            ImageDraw.Draw(shuxing_temp).text((attr_text_x, 13), f'{attr_name}', (255, 255, 255), attr_font, 'mm')
             img.paste(shuxing_temp, (attr_tag_x, y0 + 238), shuxing_temp)
 
         img.paste(home_title_small, (276, y0 + 270), home_title_small)

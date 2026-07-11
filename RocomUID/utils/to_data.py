@@ -165,23 +165,10 @@ async def api_to_dict_pet_info(
         for item in petinfo['display_info']['skill']['skill_data']:
             if item["type"] == 1:
                 info_skill = await get_skill_info(item["id"])
-                iconid = (
-                    item.get("iconid")
-                    or item.get("icon_id")
-                    or item.get("icon")
-                    or info_skill.get("iconid")
-                    or item["id"]
-                )
-                if not iconid:
-                    iconid = item["id"]
-                try:
-                    iconid = int(iconid)
-                except (TypeError, ValueError):
-                    iconid = int(item["id"])
                 skill_info = {
                     "id": item["id"],
                     "name": info_skill["name"],
-                    "iconid": iconid,
+                    "iconid": info_skill.get("iconid", item["id"]),
                     "pos": item["pos"],
                     "is_equipped": item["is_equipped"],
                     "use_times": item["use_times"],
@@ -238,12 +225,7 @@ async def api_to_dict_pet_info(
             "skills": pet_skill,
             "feature": pet_feature,
             "glass_info": petinfo['display_info']['glass_info'],
-            "voice": (
-                npc_pet_info
-                .get('npc_pet', {})
-                .get('pet', {})
-                .get('voice')
-            ),
+            "voice" : npc_pet_info.get("npc_pet", {}).get("pet", {}).get("voice"),
         }
 
         pet_info["pets_list"][pet_gid] = msgspec.to_builtins(
