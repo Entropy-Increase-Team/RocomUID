@@ -4,14 +4,13 @@ from pathlib import Path
 import os
 import copy
 import time
-import json
 from PIL import Image, ImageDraw, ImageChops
 from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
-from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH, PLAYER_PATH
+from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
-from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
-from ..utils.convert import get_pet_info, get_skill_info
+from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
+from ..utils.convert import get_pet_info, get_skill_info, pet_list, nature_map
 from ..utils.error_reply import prefix
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -451,6 +450,42 @@ def _get_voice_badge_text(pet_info):
         return '粗嗓门'
     return f'{voice_num}db'
 
+def _get_weight_badge_info(pet_info, pet_base):
+    weight = getattr(pet_info, 'weight', None)
+    weight_low = pet_base.get('weight_low')
+    weight_high = pet_base.get('weight_high')
+    if weight in [None, ''] or weight_low in [None, ''] or weight_high in [None, '']:
+        return None
+    try:
+        weight_num = float(weight)
+        low_num = float(weight_low)
+        high_num = float(weight_high)
+    except (TypeError, ValueError):
+        return None
+    if high_num <= low_num:
+        return None
+    edge = (high_num - low_num) * 0.05
+    if weight_num >= high_num - edge:
+        return '大块头', TEXT_PATH / 'img_MedalIcon_Huge.png'
+    if weight_num <= low_num + edge:
+        return '小块头', TEXT_PATH / 'img_MedalIcon_Mini.png'
+    return None
+
+def _get_voice_badge_info(pet_info):
+    voice_badge_text = _get_voice_badge_text(pet_info)
+    if voice_badge_text == '婉转声':
+        return voice_badge_text, TEXT_PATH / 'img_MedalIcon_high.png'
+    if voice_badge_text == '粗嗓门':
+        return voice_badge_text, TEXT_PATH / 'img_MedalIcon_low.png'
+    return None
+
+def _measure_brief_tag(draw, text):
+    bbox = draw.textbbox((0, 0), text, font=rc_font_18)
+    return bbox[2] - bbox[0] + 24 + 2 + 8 * 2
+
+def _draw_brief_tag(img, draw, x, y, text, icon_path, fill, border):
+    return _draw_icon_text_badge(img, draw, x, y, icon_path, text, rc_font_18, fill, border, fill, pad_x=8, h=30, icon_gap=2)
+
 def _draw_home_badge(text: str):
     badge_w = 90
     badge_h = 28
@@ -464,13 +499,271 @@ def _draw_home_badge(text: str):
     badge_draw.text((text_x, text_y), text, (255, 255, 255), rc_font_14)
     return badge
 
-def _get_home_name(uid: str) -> str:
-    pet_info_path = PLAYER_PATH / uid / 'pet_info.json'
-    if os.path.exists(pet_info_path):
-        with Path.open(pet_info_path, encoding='utf-8') as f:
-            pet_data = json.load(f)
-            return pet_data.get('home_name') or '未命名家园'
-    return '未命名家园'
+def _format_percent(value):
+    if value in [None, '']:
+        return '--'
+    try:
+        percent = float(value)
+        if percent <= 1:
+            percent *= 100
+        return f'{percent:.2f}%'
+    except (TypeError, ValueError):
+        return str(value)
+
+def _calc_range_percent(value, low, high):
+    if value in [None, ''] or low in [None, ''] or high in [None, '']:
+        return None
+    try:
+        low_num = float(low)
+        high_num = float(high)
+        if high_num == low_num:
+            return None
+        return max(0, min(100, (float(value) - low_num) * 100 / (high_num - low_num)))
+    except (TypeError, ValueError):
+        return None
+
+def _calc_voice_percent(value):
+    if value in [None, '']:
+        return None
+    try:
+        return max(0, min(100, (float(value) + 100) / 2))
+    except (TypeError, ValueError):
+        return None
+
+def _format_height(value):
+    if value in [None, '']:
+        return '--'
+    try:
+        height = float(value)
+        if height > 10:
+            height /= 100
+        return f'{height:.2f}m'
+    except (TypeError, ValueError):
+        return str(value)
+
+def _format_weight(value):
+    if value in [None, '']:
+        return '--'
+    try:
+        weight = float(value)
+        if weight > 500:
+            weight /= 1000
+        return f'{weight:.3f}kg'
+    except (TypeError, ValueError):
+        return str(value)
+
+def _get_nature_name(nature):
+    if isinstance(nature, dict):
+        return nature.get('name') or nature.get('nature_name') or nature.get('desc') or '未知'
+    if nature in [None, '']:
+        return '未知'
+    try:
+        nature_info = nature_map.get(str(int(nature)))
+        if isinstance(nature_info, dict):
+            return nature_info.get('name') or str(nature)
+        return str(nature)
+    except (TypeError, ValueError):
+        pass
+    return str(nature)
+
+def _get_speciality_name(pet_info, pet_base):
+    speciality_map = {
+        1: '无',
+        101: '奇袭',
+        103: '亲密',
+        104: '灵巧',
+        105: '灵巧',
+        106: '灵巧',
+        401: '疾行',
+        402: '同乘',
+        502: '勇敢',
+        1001: '爱分享',
+        3001: '家里蹲',
+        5002: '热心教',
+        50001: '慈悲为怀',
+    }
+    ids = getattr(pet_info, 'real_speciality_ids', None)
+    if not ids:
+        return None
+    talent_list = pet_base.get('talent_random_list') or []
+    names = []
+    for item in ids:
+        try:
+            item_id = int(item)
+        except (TypeError, ValueError):
+            continue
+        if item_id in speciality_map:
+            names.append(speciality_map[item_id])
+        elif 0 <= item_id < len(talent_list):
+            names.append(str(talent_list[item_id]))
+        elif item_id % 100 < len(talent_list):
+            names.append(str(talent_list[item_id % 100]))
+    names = [name for name in names if name and name != '无']
+    return '、'.join(names[:2]) or '无'
+
+def _get_metric_percent(pet_info, pet_base, metric):
+    percent = getattr(pet_info, f'{metric}_percent', None)
+    if percent not in [None, '']:
+        return percent
+    if metric == 'voice':
+        return _calc_voice_percent(getattr(pet_info, 'voice', None))
+    return _calc_range_percent(
+        getattr(pet_info, metric, None),
+        pet_base.get(f'{metric}_low'),
+        pet_base.get(f'{metric}_high'),
+    )
+
+def _get_mutation_name(pet_info):
+    mutation_name = getattr(pet_info, 'mutation_name', None)
+    if mutation_name:
+        return mutation_name
+    mutation_type = getattr(pet_info, 'mutation_type', None)
+    return {0: '普通', 1: '异色', 8: '炫彩', 9: '异色'}.get(mutation_type, '普通')
+
+def _draw_round_rect(draw, xy, radius, fill, outline=None, width=1):
+    draw.rounded_rectangle(xy, radius=radius, fill=fill, outline=outline, width=width)
+
+def _draw_text_badge(draw, x, y, text, font, fill, border, text_fill=None, pad_x=14, h=35):
+    text_fill = text_fill or fill
+    bbox = draw.textbbox((0, 0), text, font=font)
+    w = bbox[2] - bbox[0] + pad_x * 2
+    _draw_round_rect(draw, (x, y, x + w, y + h), h // 2, (255, 255, 255), border)
+    draw.text((x + w / 2, y + h / 2), text, text_fill, font, 'mm')
+    return w
+
+def _draw_icon_text_badge(img, draw, x, y, icon_path, text, font, fill, border, text_fill=None, pad_x=12, h=34, icon_gap=4):
+    text_fill = text_fill or fill
+    icon_size = 24
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_w = bbox[2] - bbox[0]
+    w = text_w + icon_size + icon_gap + pad_x * 2
+    _draw_round_rect(draw, (x, y, x + w, y + h), h // 2, (255, 255, 255), border)
+    if os.path.exists(icon_path):
+        icon_img = Image.open(icon_path).convert('RGBA').resize((icon_size, icon_size), Image.LANCZOS)
+        img.paste(icon_img, (int(x + pad_x), int(y + (h - icon_size) / 2)), icon_img)
+    draw.text((x + pad_x + icon_size + icon_gap, y + h / 2), text, text_fill, font, 'lm')
+    return w
+
+def _draw_fixed_text_badge(draw, x, y, w, text, font, fill, border, text_fill=None, h=35):
+    text_fill = text_fill or fill
+    _draw_round_rect(draw, (x, y, x + w, y + h), h // 2, (255, 255, 255), border)
+    draw.text((x + w / 2, y + h / 2), text, text_fill, font, 'mm')
+
+def _draw_metric(img, draw, x, y, icon_path, label, value, percent, color, bg):
+    percent_text = _format_percent(percent)
+    text = f'{label}：{value} ({percent_text})'
+    bbox = draw.textbbox((0, 0), text, font=rc_font_22)
+    icon_size = 24
+    w = min(350, bbox[2] - bbox[0] + icon_size + 44)
+    _draw_round_rect(draw, (x, y, x + w, y + 34), 17, bg, color)
+    if os.path.exists(icon_path):
+        icon_img = Image.open(icon_path).convert('RGBA').resize((icon_size, icon_size), Image.LANCZOS)
+        img.paste(icon_img, (int(x + 12), int(y + 5)), icon_img)
+    draw.text((x + 42, y + 17), text, color, rc_font_22, 'lm')
+    return w
+
+async def draw_pet_home_brief(uid, pet_data, home_name):
+    pet_items = list(pet_data.items())
+    card_h = 210
+    bg_height = max(500, 260 + len(pet_items) * card_h - 5)
+    img = Image.open(TEXT_PATH / 'bg.jpg').convert('RGB')
+    if bg_height > 2417:
+        img = img.resize((1000, bg_height))
+    else:
+        img = img.crop((0, 0, 1000, bg_height))
+
+    img.paste(top_bg, (0, 0), top_bg)
+    img_draw = ImageDraw.Draw(img)
+    img_draw.text((45, 90), f'{home_name}的家园精灵', (255, 255, 255), rc_font_44, 'lm')
+    img_draw.text((45, 132), f'UID{uid} · 共{len(pet_items)}只', (255, 255, 255), skill_font_24, 'lm')
+
+    for pet_index, (gid, pet_info) in enumerate(pet_items):
+        y0 = 210 + pet_index * card_h
+        pet_base = await get_pet_info(pet_info.pet_id)
+        card = Image.new('RGBA', (940, 195), (255, 255, 255, 235))
+        card_mask = Image.new('L', (940, 195), 0)
+        ImageDraw.Draw(card_mask).rounded_rectangle((0, 0, 940, 195), radius=18, fill=255)
+        img.paste(card, (30, y0), card_mask)
+
+        first_attr = pet_base.get('unit_type_list', pet_base.get('unit_type', [2]))[0]
+        attr_color = _get_attr_draw_info(first_attr)[0]
+        head_bg = Image.new('RGBA', (142, 142), attr_color)
+        head_mask = pet_bg_mask.resize((142, 142))
+        img.paste(head_bg, (55, y0 + 23), head_mask)
+
+        pet_icon_name = pet_base['icon']
+        if pet_info.mutation_type in [9, 1]:
+            pet_icon_name = pet_base['icon'] + '_yise'
+        pet_head_icon = ROCOM_ICON_PATH / f'{pet_icon_name}.png'
+        if not os.path.exists(pet_head_icon):
+            pet_head_icon = ROCOM_HEAD_PATH / f'{pet_info.pet_id}.png'
+        if not os.path.exists(pet_head_icon):
+            pet_head_icon = ROCOM_HEAD_PATH / '3004.png'
+        pokemon_img = Image.open(pet_head_icon).convert('RGBA').resize((138, 138), Image.LANCZOS)
+        img.paste(pokemon_img, (57, y0 + 25), pokemon_img)
+        if pet_info.mutation_type in [1, 8, 9]:
+            star_img = Image.open(TEXT_PATH / f'star_{pet_info.mutation_type}.png').convert('RGBA').resize((46, 46))
+            img.paste(star_img, (160, y0 + 18), star_img)
+
+        gender_text = '♀ 雌性' if pet_info.gender == 2 else '♂ 雄性' if pet_info.gender == 1 else '未知'
+        gender_color = (236, 73, 118) if pet_info.gender == 2 else (69, 145, 237)
+        _draw_fixed_text_badge(img_draw, 78, y0 + 133, 96, gender_text, rc_font_18, gender_color, (255, 207, 218), gender_color, h=30)
+        img_draw.text((125, y0 + 173), f'GID {gid}', (95, 106, 122), rc_font_18, 'mm')
+
+        img_draw.text((235, y0 + 35), f'Lv.{pet_info.level}', (80, 96, 116), rc_font_22, 'lm')
+        pet_name = pet_info.name or pet_base.get('name', '')
+        img_draw.text((330, y0 + 35), pet_name, (27, 37, 52), rc_font_34, 'lm')
+        mutation_name = _get_mutation_name(pet_info)
+        if mutation_name != '普通':
+            star_path = TEXT_PATH / f'star_{pet_info.mutation_type}.png'
+            text_bbox = img_draw.textbbox((0, 0), mutation_name, font=rc_font_22)
+            mutation_text_w = text_bbox[2] - text_bbox[0]
+            mutation_text_x = 950 - mutation_text_w
+            mutation_star_x = mutation_text_x - 38
+            if os.path.exists(star_path):
+                star_img = Image.open(star_path).convert('RGBA').resize((34, 34))
+                img.paste(star_img, (int(mutation_star_x), y0 + 18), star_img)
+            img_draw.text((mutation_text_x, y0 + 35), mutation_name, (154, 60, 34), rc_font_22, 'lm')
+
+        extra_tag_y = y0 + 75 if mutation_name != '普通' else y0 + 20
+        extra_tags = []
+        weight_badge_info = _get_weight_badge_info(pet_info, pet_base)
+        if weight_badge_info:
+            weight_badge_text, weight_badge_icon = weight_badge_info
+            extra_tags.append((weight_badge_text, weight_badge_icon, (199, 96, 22), (255, 222, 195)))
+        voice_badge_info = _get_voice_badge_info(pet_info)
+        if voice_badge_info:
+            voice_badge_text, voice_badge_icon = voice_badge_info
+            extra_tags.append((voice_badge_text, voice_badge_icon, (0, 137, 125), (203, 251, 240)))
+        if extra_tags:
+            tag_gap = 8
+            extra_tag_widths = [_measure_brief_tag(img_draw, tag[0]) for tag in extra_tags]
+            extra_tag_x = 950 - sum(extra_tag_widths) - tag_gap * (len(extra_tags) - 1)
+            for tag_width, (tag_text, tag_icon, tag_fill, tag_border) in zip(extra_tag_widths, extra_tags):
+                _draw_brief_tag(img, img_draw, extra_tag_x, extra_tag_y, tag_text, tag_icon, tag_fill, tag_border)
+                extra_tag_x += tag_width + tag_gap
+
+        badge_x = 235
+        for shuxing in pet_base.get('unit_type', []):
+            attr_color, attr_name, _ = _get_attr_draw_info(shuxing)
+            blood_icon = TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png'
+            badge_x += _draw_icon_text_badge(img, img_draw, badge_x, y0 + 63, blood_icon, f'血脉：{attr_name}', rc_font_22, attr_color, (232, 229, 255), attr_color, pad_x=12, h=34) + 10
+            break
+        nature_name = _get_nature_name(pet_info.nature)
+        badge_x += _draw_text_badge(img_draw, badge_x, y0 + 63, f'性格：{nature_name}', rc_font_22, (207, 92, 24), (255, 222, 195), (207, 92, 24), pad_x=12, h=34) + 10
+        speciality_name = _get_speciality_name(pet_info, pet_base)
+        if speciality_name:
+            _draw_text_badge(img_draw, badge_x, y0 + 60, f'特长：{speciality_name}', rc_font_22, (78, 83, 224), (220, 226, 255), (78, 83, 224), pad_x=12, h=34)
+
+        voice_text = f'{getattr(pet_info, "voice", "--")} dB' if getattr(pet_info, 'voice', None) not in [None, ''] else '--'
+        _draw_metric(img, img_draw, 235, y0 + 105, TEXT_PATH / 'voice.png', '声音', voice_text, _get_metric_percent(pet_info, pet_base, 'voice'), (0, 137, 125), (203, 251, 240))
+        height_w = _draw_metric(img, img_draw, 235, y0 + 145, TEXT_PATH / 'height.png', '身高', _format_height(getattr(pet_info, 'height', None)), _get_metric_percent(pet_info, pet_base, 'height'), (0, 121, 177), (214, 242, 255))
+        weight_x = max(465, 235 + height_w + 16)
+        _draw_metric(img, img_draw, weight_x, y0 + 145, TEXT_PATH / 'weight.png', '体重', _format_weight(getattr(pet_info, 'weight', None)), _get_metric_percent(pet_info, pet_base, 'weight'), (199, 96, 22), (255, 247, 220))
+
+    img.paste(footer, (270, bg_height - 44), footer)
+    res = await convert_img(img)
+    return res
 
 async def _draw_home_skill(skill, size: str = 'small'):
     info_skill = await get_skill_info(skill.id)
@@ -525,8 +818,7 @@ async def _draw_home_skill(skill, size: str = 'small'):
     jineng_draw.text(cost_xy, f"{info_skill.get('cost', 0)}", (255, 255, 255), cost_font, 'lm')
     return jineng_temp
 
-async def draw_pet_home(uid, pet_data):
-    home_name = _get_home_name(uid)
+async def draw_pet_home(uid, pet_data, home_name):
     pet_items = list(pet_data.items())
     card_h = 420
     bg_height = max(850, 360 + len(pet_items) * card_h + 70)

@@ -1,5 +1,4 @@
 from pathlib import Path
-import os
 import json
 from typing import Dict, Union
 
@@ -7,7 +6,8 @@ import msgspec
 from msgspec import json as msgjson
 
 from .rocom_api import wegame_api
-from .convert import get_plant_info, get_skill_info
+from .convert import get_pet_info, get_plant_info, get_skill_info
+from gsuid_core.logger import logger
 from .models import HomeInfo, PetInfoMap, PetPanelInfo
 
 PET_NAME_MAP_PATH = Path(__file__).parent / "map" / "pet_name_map.json"
@@ -21,6 +21,13 @@ def convert_home_info(data: Dict) -> HomeInfo:
 
 def convert_pet_info_map(data: Dict) -> PetInfoMap:
     return msgspec.convert(data, type=PetInfoMap)
+
+
+def get_home_name_from_homeinfo(homeinfo: Dict) -> str:
+    friend_home_brief_info = homeinfo.get('friend_home_brief_info') or {}
+    if not isinstance(friend_home_brief_info, dict):
+        return '未命名家园'
+    return friend_home_brief_info.get('home_name') or '未命名家园'
 
 
 def get_pet_name_from_map(pet_id: Union[int, str]) -> Union[str, None]:
@@ -39,6 +46,28 @@ def get_pet_name_from_map(pet_id: Union[int, str]) -> Union[str, None]:
     return pet_name if isinstance(pet_name, str) and pet_name else None
 
 
+def _calc_range_percent(value, low, high):
+    if value in [None, ''] or low in [None, ''] or high in [None, '']:
+        return None
+    try:
+        low_num = float(low)
+        high_num = float(high)
+        if high_num == low_num:
+            return None
+        return max(0, min(100, (float(value) - low_num) * 100 / (high_num - low_num)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _calc_voice_percent(value):
+    if value in [None, '']:
+        return None
+    try:
+        return max(0, min(100, (float(value) + 100) / 2))
+    except (TypeError, ValueError):
+        return None
+
+
 async def api_to_dict_home_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
@@ -53,7 +82,7 @@ async def api_to_dict_home_info(
         return "没有获取到该用户的家园信息"
 
     home_info: dict = {
-        "home_name": friend_home_brief_info.get('home_name') or '未命名家园',
+        "home_name": get_home_name_from_homeinfo(homeinfo),
         "home_experience": friend_home_brief_info.get('home_experience', 0),
         "home_level": friend_home_brief_info.get('home_level', 0),
         "room_level": friend_home_brief_info.get('room_level', 0),
@@ -127,10 +156,10 @@ async def api_to_dict_pet_info(
         return await wegame_api._get_last_error()
 
     homeinfo = home_data['home_info']
-    pet_info: Dict[str, object] = {'pets_list': {}}
-    friend_home_brief_info = homeinfo.get('friend_home_brief_info') or {}
-    pet_info['home_name'] = friend_home_brief_info.get('home_name') or '未命名家园'
-
+    pet_info: Dict[str, object] = {
+        'home_name': get_home_name_from_homeinfo(homeinfo),
+        'pets_list': {},
+    }
     npc_pet_map = {
         str(item.get('pet_gid')): item
         for item in home_data.get('npc_pets', [])
@@ -144,6 +173,8 @@ async def api_to_dict_pet_info(
 
         pet_gid = str(petinfo['home_pet_info']['pet_gid'])
         npc_pet_info = npc_pet_map.get(pet_gid, {})
+        npc_pet = npc_pet_info.get("npc_pet", {}).get("pet", {})
+        pet_base = await get_pet_info(petinfo['display_info']['base_conf_id'])
         pethp = petatk = petspatk = petdef = petspdef = petspd = 0
         for item in petinfo['display_info']['attribute_new_info']['addi_attr_data']:
             if item['type'] == 1:
@@ -225,7 +256,13 @@ async def api_to_dict_pet_info(
             "skills": pet_skill,
             "feature": pet_feature,
             "glass_info": petinfo['display_info']['glass_info'],
-            "voice" : npc_pet_info.get("npc_pet", {}).get("pet", {}).get("voice"),
+            "voice": npc_pet.get("voice"),
+            "voice_percent": _calc_voice_percent(npc_pet.get("voice")),
+            "height": npc_pet.get("height"),
+            "height_percent": _calc_range_percent(npc_pet.get("height"), pet_base.get("height_low"), pet_base.get("height_high")),
+            "weight": npc_pet.get("weight"),
+            "weight_percent": _calc_range_percent(npc_pet.get("weight"), pet_base.get("weight_low"), pet_base.get("weight_high")),
+            "real_speciality_ids": petinfo['home_pet_info'].get("real_speciality_ids"),
         }
 
         pet_info["pets_list"][pet_gid] = msgspec.to_builtins(
@@ -239,4 +276,4 @@ async def api_to_dict_pet_info(
             _ = file.write(msgjson.format(msgjson.encode(msgspec.to_builtins(pet_info)), indent=4))
 
     pet_info_map = convert_pet_info_map(pet_info["pets_list"])
-    return pet_info_map
+    return pet_info['home_name'], pet_info_map

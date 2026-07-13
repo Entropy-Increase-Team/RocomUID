@@ -17,7 +17,7 @@ from ..utils.to_data import (
     api_to_dict_pet_info,
     convert_pet_info_map,
 )
-from ..rocom_petinfo.draw_info_image import draw_pet_home
+from ..rocom_petinfo.draw_info_image import draw_pet_home, draw_pet_home_brief
 from .draw_info_image import draw_home_info
 from .draw_home_image import draw_home_image
 from .draw_garden_image import draw_garden_image
@@ -79,7 +79,10 @@ def load_pet_cache(uid: str):
     with Path.open(pet_info_path, encoding='utf-8') as f:
         pet_data = json.load(f)
 
-    return convert_pet_info_map(pet_data['pets_list'])
+    return (
+        pet_data.get('home_name') or '未命名家园',
+        convert_pet_info_map(pet_data.get('pets_list', {})),
+    )
 
 
 async def get_my_pet_info_data(uid: str):
@@ -88,8 +91,11 @@ async def get_my_pet_info_data(uid: str):
         if local_pet_data is not None:
             return local_pet_data
 
-    return await api_to_dict_pet_info(uid, PLAYER_PATH)
-
+    use_cache = is_config_enabled('RC_home_cache_enable')
+    return await api_to_dict_pet_info(
+        uid,
+        PLAYER_PATH if use_cache else None,
+    )
 
 async def _resolve_uid(bot: Bot, ev: Event, text=None):
     """解析 UID：消息参数优先，否则取绑定。失败已回错误消息并返回 None。"""
@@ -122,10 +128,18 @@ async def _draw_garden(ev: Event, uid: str, home_info) -> bytes:
 async def get_my_home_info_wegame(bot: Bot, ev: Event):
     text = ev.text.strip()
     is_pet_home = ev.command == '家园' and text.startswith('精灵')
+    is_pet_home_detail = is_pet_home and text.startswith('精灵详细')
     is_garden = '菜园' in ev.command
-    info_name = '家园精灵' if is_pet_home else '菜园' if is_garden else '家园'
+    info_name = '家园精灵详细' if is_pet_home_detail else '家园精灵' if is_pet_home else '菜园' if is_garden else '家园'
 
-    uid = await _resolve_uid(bot, ev, text[2:].strip() if is_pet_home else None)
+    if is_pet_home_detail:
+        uid_text = text.removeprefix('精灵详细').strip()
+    elif is_pet_home:
+        uid_text = text.removeprefix('精灵').strip()
+    else:
+        uid_text = None
+
+    uid = await _resolve_uid(bot, ev, uid_text)
     if uid is None:
         return
     await bot.send(f'正在获取[UID]{uid}的{info_name}信息，请稍后')
@@ -134,10 +148,14 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
         pet_result = await get_my_pet_info_data(uid)
         if isinstance(pet_result, str):
             return await bot.send(pet_result)
-        pet_data = pet_result
-        if len(pet_data.keys()) == 0:
+        home_name, pet_data = pet_result
+        if isinstance(pet_data, str):
+            return await bot.send(pet_data)
+        if not pet_data:
             return await bot.send('您的家园中没有可显示的精灵数据。')
-        return await bot.send(await draw_pet_home(uid, pet_data))
+        if is_pet_home_detail:
+            return await bot.send(await draw_pet_home(uid, pet_data, home_name))
+        return await bot.send(await draw_pet_home_brief(uid, pet_data, home_name))
 
     home_info = await get_my_home_info(uid)   # 单次获取，两张图共用
     if isinstance(home_info, str):

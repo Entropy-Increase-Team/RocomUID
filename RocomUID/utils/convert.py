@@ -12,6 +12,9 @@ with Path.open(Excel_path / 'map' /'breeding.json', encoding='utf-8') as f:
     breeding = json.load(f)
     rocom_egg_conf = breeding["pet_egg_conf"]
 
+with Path.open(Excel_path / 'map' /'nature_map.json', encoding='utf-8') as f:
+    nature_map = json.load(f)
+
 with Path.open(Excel_path / 'map' /'rank_list.json', encoding='utf-8') as f:
     rank_list = json.load(f)
 

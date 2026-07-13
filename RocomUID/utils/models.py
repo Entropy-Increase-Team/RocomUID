@@ -153,6 +153,14 @@ class PetPanelInfo(Struct):
     feature: PetFeatureInfo
     glass_info: Any
     voice: Any = None
+    voice_percent: Any = None
+    height: Any = None
+    height_percent: Any = None
+    weight: Any = None
+    weight_percent: Any = None
+    speciality_id: Any = None
+    real_speciality_ids: Any = None
+    mutation_name: Any = None
 
 
 PetInfoMap = Dict[str, PetPanelInfo]
