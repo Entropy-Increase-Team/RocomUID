@@ -535,8 +535,7 @@ def _format_height(value):
         return '--'
     try:
         height = float(value)
-        if height > 10:
-            height /= 100
+        height /= 100
         return f'{height:.2f}m'
     except (TypeError, ValueError):
         return str(value)
@@ -546,8 +545,7 @@ def _format_weight(value):
         return '--'
     try:
         weight = float(value)
-        if weight > 500:
-            weight /= 1000
+        weight /= 1000
         return f'{weight:.3f}kg'
     except (TypeError, ValueError):
         return str(value)
@@ -744,11 +742,12 @@ async def draw_pet_home_brief(uid, pet_data, home_name):
                 extra_tag_x += tag_width + tag_gap
 
         badge_x = 235
-        for shuxing in pet_base.get('unit_type', []):
-            attr_color, attr_name, _ = _get_attr_draw_info(shuxing)
-            blood_icon = TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png'
-            badge_x += _draw_icon_text_badge(img, img_draw, badge_x, y0 + 63, blood_icon, f'血脉：{attr_name}', rc_font_22, attr_color, (232, 229, 255), attr_color, pad_x=12, h=34) + 10
-            break
+        blood_color, blood_name = XUEMAI_LIST_DRAW.get(
+            pet_info.blood_id,
+            (SHUX_SKILLLIST_DRAW['无'], '未知'),
+        )
+        blood_icon = TEXT_PATH / '血脉' / f'{pet_info.blood_id}.png'
+        badge_x += _draw_icon_text_badge(img, img_draw, badge_x, y0 + 63, blood_icon, f'血脉：{blood_name}', rc_font_22, blood_color, (232, 229, 255), blood_color, pad_x=12, h=34) + 10
         nature_name = _get_nature_name(pet_info.nature)
         badge_x += _draw_text_badge(img_draw, badge_x, y0 + 63, f'性格：{nature_name}', rc_font_22, (207, 92, 24), (255, 222, 195), (207, 92, 24), pad_x=12, h=34) + 10
         speciality_name = _get_speciality_name(pet_info, pet_base)
