@@ -63,7 +63,7 @@ def _calc_voice_percent(value):
     if value in [None, '']:
         return None
     try:
-        return max(0, min(100, (float(value) + 100) / 2))
+        return max(0, min(100, abs(float(value))))
     except (TypeError, ValueError):
         return None
 
