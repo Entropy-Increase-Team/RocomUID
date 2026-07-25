@@ -115,19 +115,6 @@ async def get_my_user_info_wegame(bot: Bot, ev: Event):
     im = await draw_user_info_wegame(ev, data)
     await bot.send(im, at_sender=True)
 
-@sv_user_info.on_command('我的精灵')
-async def get_my_user_info(bot: Bot, ev: Event):
-    args = ev.text.split()
-    if len(args) < 1:
-        return await bot.send('请输入需要查询的精灵名称', at_sender=True)
-    baseid = await get_rocom_name2id(args[0])
-    if baseid == 0:
-        return await bot.send('精灵名称不存在，请输入正确的精灵名称', at_sender=True)
-    token, account_type = await RocomUser.get_rocom_token(ev.user_id, ev.bot_self_id)
-    if not token:
-        return await bot.send("用户token不存在，请绑定后再查询!")
-    data = await rocom_api.get_rocom_pet_list(token=token, baseid=baseid, account_type=account_type)
-    await bot.send(str(data))
 
 @sv_user_info.on_command("绑定token")
 async def add_my_user_token(bot: Bot, ev: Event):

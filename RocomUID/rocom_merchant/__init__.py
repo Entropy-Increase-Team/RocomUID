@@ -28,14 +28,7 @@ async def get_merchant_info_list(bot: Bot, ev: Event):
         return await bot.send(f"远行商人商品未刷新\n可输入[{P}开启远行商人]订阅远行商人商品信息推送", at_sender=True)
     im = await draw_merchant_info(merchant_info)
     await bot.send(im)
-
-@sv_merchant.on_command(('商人'))
-async def get_merchant_info_list_cs(bot: Bot, ev: Event):
-    for index in [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020]:
-        await asyncio.sleep(8)
-        merchant_info = await text_api.get_merchant_info_cs(index)
-    #merchant_info = await wegame_api.get_merchant_info_cs(3019)
-    await bot.send(str(merchant_info), at_sender=True)
+    
 
 # 每日定点执行远行商人推送
 @scheduler.scheduled_job('cron', hour ='*', minute='05')

@@ -70,14 +70,6 @@
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
-      },
-	  {
-        "name": "查询",
-        "desc": "查询",
-        "eg": "查询[ID/昵称][UID]",
-        "need_ck": false,
-        "need_sk": true,
-        "need_admin": false
       }
     ]
   },
