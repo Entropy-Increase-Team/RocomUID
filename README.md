@@ -63,7 +63,7 @@
 
 <details><summary>rc菜园 - 命令: rc菜园(需要wegame_api_key才可使用)</summary><p>
 <img src=".github\assets\caiyuan_old.jpg"/>
-<img src=".github\assets\caiyuan_old.jpg"/> 
+<img src=".github\assets\caiyuan_new.jpg"/> 
 </p></details>
 
 <details><summary>rc家园精灵 - 命令: rc家园精灵(需要wegame_api_key才可使用)</summary><p>
