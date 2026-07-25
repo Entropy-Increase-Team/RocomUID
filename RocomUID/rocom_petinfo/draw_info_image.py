@@ -448,7 +448,7 @@ def _get_voice_badge_text(pet_info):
         return '婉转声'
     if -100 <= voice_num <= -96:
         return '粗嗓门'
-    return f'{voice_num}db'
+    return f'{voice_num}'
 
 def _get_weight_badge_info(pet_info, pet_base):
     weight = getattr(pet_info, 'weight', None)
@@ -647,6 +647,29 @@ def _draw_fixed_text_badge(draw, x, y, w, text, font, fill, border, text_fill=No
     _draw_round_rect(draw, (x, y, x + w, y + h), h // 2, (255, 255, 255), border)
     draw.text((x + w / 2, y + h / 2), text, text_fill, font, 'mm')
 
+def _draw_gender_badge(img, draw, center_x, y, gender):
+    is_female = gender == 2
+    is_male = gender == 1
+    text = '雌性' if is_female else '雄性' if is_male else '未知'
+    color = (236, 73, 118) if is_female else (69, 145, 237) if is_male else (95, 106, 122)
+    border = (255, 207, 218) if is_female else (207, 226, 255) if is_male else (224, 224, 224)
+    icon_path = TEXT_PATH / ('woman.png' if is_female else 'man.png')
+    icon_size = 20 if is_female or is_male else 0
+    icon_gap = 4 if icon_size else 0
+    pad_x = 10
+    h = 30
+    text_bbox = draw.textbbox((0, 0), text, font=rc_font_18)
+    text_w = text_bbox[2] - text_bbox[0]
+    w = text_w + icon_size + icon_gap + pad_x * 2
+    x = center_x - w / 2
+    _draw_round_rect(draw, (x, y, x + w, y + h), h // 2, (255, 255, 255), border)
+    text_x = x + pad_x
+    if icon_size and os.path.exists(icon_path):
+        icon_img = Image.open(icon_path).convert('RGBA').resize((icon_size, icon_size), Image.LANCZOS)
+        img.paste(icon_img, (int(text_x), int(y + (h - icon_size) / 2)), icon_img)
+        text_x += icon_size + icon_gap
+    draw.text((text_x, y + h / 2), text, color, rc_font_18, 'lm')
+
 def _draw_metric(img, draw, x, y, icon_path, label, value, percent, color, bg):
     percent_text = _format_percent(percent)
     text = f'{label}：{value} ({percent_text})'
@@ -703,9 +726,7 @@ async def draw_pet_home_brief(uid, pet_data, home_name):
             star_img = Image.open(TEXT_PATH / f'star_{pet_info.mutation_type}.png').convert('RGBA').resize((46, 46))
             img.paste(star_img, (160, y0 + 18), star_img)
 
-        gender_text = '♀ 雌性' if pet_info.gender == 2 else '♂ 雄性' if pet_info.gender == 1 else '未知'
-        gender_color = (236, 73, 118) if pet_info.gender == 2 else (69, 145, 237)
-        _draw_fixed_text_badge(img_draw, 78, y0 + 133, 96, gender_text, rc_font_18, gender_color, (255, 207, 218), gender_color, h=30)
+        _draw_gender_badge(img, img_draw, 126, y0 + 133, pet_info.gender)
         img_draw.text((125, y0 + 173), f'GID {gid}', (95, 106, 122), rc_font_18, 'mm')
 
         img_draw.text((235, y0 + 35), f'Lv.{pet_info.level}', (80, 96, 116), rc_font_22, 'lm')
@@ -754,7 +775,7 @@ async def draw_pet_home_brief(uid, pet_data, home_name):
         if speciality_name:
             _draw_text_badge(img_draw, badge_x, y0 + 60, f'特长：{speciality_name}', rc_font_22, (78, 83, 224), (220, 226, 255), (78, 83, 224), pad_x=12, h=34)
 
-        voice_text = f'{getattr(pet_info, "voice", "--")} dB' if getattr(pet_info, 'voice', None) not in [None, ''] else '--'
+        voice_text = f'{getattr(pet_info, "voice", "--")}' if getattr(pet_info, 'voice', None) not in [None, ''] else '--'
         _draw_metric(img, img_draw, 235, y0 + 105, TEXT_PATH / 'voice.png', '声音', voice_text, _get_metric_percent(pet_info, pet_base, 'voice'), (0, 137, 125), (203, 251, 240))
         height_w = _draw_metric(img, img_draw, 235, y0 + 145, TEXT_PATH / 'height.png', '身高', _format_height(getattr(pet_info, 'height', None)), _get_metric_percent(pet_info, pet_base, 'height'), (0, 121, 177), (214, 242, 255))
         weight_x = max(465, 235 + height_w + 16)
