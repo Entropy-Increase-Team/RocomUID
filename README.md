@@ -29,7 +29,7 @@
 ## 丨功能
 
 <details><summary>rc帮助 - 命令: rc帮助</summary><p>
-<img src="https://files.seeusercontent.com/2026/04/10/rjX8/rchelp.jpg"/> 
+<img src=".github\assets\help.jpg"/> 
 </p></details>
 
 <details><summary>rc图鉴 - 命令: rc图鉴龙息帕尔</summary><p>
@@ -56,21 +56,35 @@
 <img src="https://files.seeusercontent.com/2026/04/07/Pf4z/myuserinfo.jpg"/> 
 </p></details>
 
-<details><summary>rc家园 - 命令: rc家园/rchome(需要wegame_api_key才可使用)</summary><p>
+<details><summary>rc家园 - 命令: rc家园(需要wegame_api_key才可使用)</summary><p>
 <img src="https://files.seeusercontent.com/2026/05/02/tO1w/home.jpeg"/> 
+<img src=".github/assets/home_new.jpg"/> 
+</p></details>
+
+<details><summary>rc菜园 - 命令: rc菜园(需要wegame_api_key才可使用)</summary><p>
+<img src=".github\assets\caiyuan_old.jpg"/>
+<img src=".github\assets\caiyuan_old.jpg"/> 
+</p></details>
+
+<details><summary>rc家园精灵 - 命令: rc家园精灵(需要wegame_api_key才可使用)</summary><p>
+<img src=".github\assets\homepet.jpg"/> 
+</p></details>
+
+<details><summary>rc家园精灵详细 - 命令: rc家园精灵详细(需要wegame_api_key才可使用)</summary><p>
+<img src=".github\assets\homepet_detail.jpg"/> 
 </p></details>
 
 ## 丨部分功能使用说明
 + 关于游戏数据获取
 >
->使用远行商人与个人数据获取功能需要配置wegame_api_key才能使用
+>使用远行商人与个人数据获取功能需要配置插件wegame_api_key才能使用
 >
->关于wegame_api_key：目前可以加群 [1097809141](https://qm.qq.com/q/8SuHC3siIM) 进行申请
+>关于wegame_api_key：目前可以往网站申请，前往[洛克魔法书官网](https://rocom.shallow.ink)
 >
->或前往网站申请，前往[洛克魔法书官网](https://rocom.shallow.ink)
+>或加群 [1097809141](https://qm.qq.com/q/8SuHC3siIM) 咨询api相关问题
 >
->获取到wegame_api_key后去往gscore网站后台输入wegame_api_key后重启core才能使用
->
+⚠注意：首次添加/后续更换需重启core才能生效
+
 
 ## 丨其他
 
