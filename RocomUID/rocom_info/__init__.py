@@ -176,16 +176,6 @@ async def find_rocom_list_info(bot: Bot, ev: Event):
 
     rocom_find_list = list(pet_list.keys())
     find_cocom_list = copy.deepcopy(rocom_find_list)
-    for rocom_id in rocom_find_list:
-        if pet_list[rocom_id]["feature"].get("name", '') == '' and rocom_id in find_cocom_list:
-            find_cocom_list.remove(rocom_id)
-        if len(pet_list[rocom_id]["level_skill_list"]) == 0 and rocom_id in find_cocom_list:
-            find_cocom_list.remove(rocom_id)
-        if len(pet_list[rocom_id]["machine_skill_list"]) == 0 and rocom_id in find_cocom_list:
-            find_cocom_list.remove(rocom_id)
-        if len(pet_list[rocom_id]["blood_skill_list"]) == 0 and rocom_id in find_cocom_list:
-            find_cocom_list.remove(rocom_id)
-    rocom_find_list = copy.deepcopy(find_cocom_list)
 
     for iteminfo in find_args:
         if len(rocom_find_list) <= 0:

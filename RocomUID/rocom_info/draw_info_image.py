@@ -49,6 +49,37 @@ SHUX_LIST_DRAW = {
     '幽': (148, 70, 236),
 }
 
+SHUX_ID_NAME = {
+    9: '冰',
+    3: '草',
+    13: '虫',
+    8: '地',
+    11: '电',
+    12: '毒',
+    18: '恶',
+    6: '光',
+    20: '幻',
+    4: '火',
+    19: '机械',
+    10: '龙',
+    16: '萌',
+    2: '普通',
+    5: '水',
+    14: '武',
+    15: '翼',
+    17: '幽',
+}
+
+
+def _get_skill_family(family):
+    if family in SHUX_LIST_DRAW:
+        return family
+    if isinstance(family, str) and family.isdigit():
+        return SHUX_ID_NAME.get(int(family), '无')
+    if isinstance(family, int):
+        return SHUX_ID_NAME.get(family, '无')
+    return '无'
+
 jinhua_icon_list = {
     '1_0':220,
     '2_0':70,
@@ -374,8 +405,9 @@ async def draw_rocom_info(rocom_info):
         for shul, jineng in enumerate(skill_level_list):
             jn_y = math.floor(shul / 5)
             jn_x = shul - (5 * jn_y)
+            family = _get_skill_family(jineng.get("families", '无'))
             jineng_img = Image.new(
-                'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
+                'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
@@ -384,7 +416,7 @@ async def draw_rocom_info(rocom_info):
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
-            sx_image = Image.open(TEXT_PATH / f'{jineng["families"]}.png').convert('RGBA').resize((45, 45))
+            sx_image = Image.open(TEXT_PATH / f'{family}.png').convert('RGBA').resize((45, 45))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -421,8 +453,9 @@ async def draw_rocom_info(rocom_info):
         for shul, jineng in enumerate(skill_blood_list):
             jn_y = math.floor(shul / 5)
             jn_x = shul - (5 * jn_y)
+            family = _get_skill_family(jineng.get("families", '无'))
             jineng_img = Image.new(
-                'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
+                'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
@@ -431,7 +464,7 @@ async def draw_rocom_info(rocom_info):
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
-            sx_image = Image.open(TEXT_PATH / f'{jineng["families"]}.png').convert('RGBA').resize((45, 45))
+            sx_image = Image.open(TEXT_PATH / f'{family}.png').convert('RGBA').resize((45, 45))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -470,8 +503,9 @@ async def draw_rocom_info(rocom_info):
         for shul, jineng in enumerate(skill_stone_list):
             jn_y = math.floor(shul / 5)
             jn_x = shul - (5 * jn_y)
+            family = _get_skill_family(jineng.get("families", '无'))
             jineng_img = Image.new(
-                'RGBA', (207, 99), SHUX_LIST_DRAW[jineng["families"]]
+                'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
             if not os.path.exists(jineng_icon):
@@ -480,7 +514,7 @@ async def draw_rocom_info(rocom_info):
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
-            sx_image = Image.open(TEXT_PATH / f'{jineng["families"]}.png').convert('RGBA').resize((45, 45))
+            sx_image = Image.open(TEXT_PATH / f'{family}.png').convert('RGBA').resize((45, 45))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
