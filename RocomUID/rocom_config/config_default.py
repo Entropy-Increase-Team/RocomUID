@@ -53,6 +53,11 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
             "文字版",
         ],
     ),
+    "RC_egg_predict_api_enable": GsBoolConfig(
+        "精灵蛋预测使用接口",
+        "开启后查蛋/精灵蛋预测使用接口查询；关闭后使用本地数据预测",
+        False,
+    ),
     "RC_garden_render_style": GsStrConfig(
         "家园/菜园渲染样式",
         "选择家园/菜园信息渲染模板：新版 或 旧版",

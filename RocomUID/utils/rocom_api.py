@@ -174,7 +174,7 @@ class TEXTAPI():
             params=params,
         )
         return data
-    
+
     async def get_merchant_info_cs(self, shopid):
         params = {"shop_id": shopid, "wait_ms":5000}
         nowtime = time.time() * 1000
@@ -602,6 +602,23 @@ class WegameApi():
             params=params,
         )
         return data
+
+    async def search_egg(self, height: float, weight: float, page_no: int = 1, page_size: int = 100):
+        """
+        孵蛋反查接口：按身高(m)、体重(kg)查询可能精灵蛋。
+        """
+        params = {
+            "height": height,
+            "weight": weight,
+            "page_no": page_no,
+            "page_size": page_size,
+        }
+        return await self._request(
+            "GET",
+            "/api/v1/games/rocom/egg/search",
+            self._wegame_headers(),
+            params=params,
+        )
     
     async def get_merchant_info_cs(self, shopid):
         params = {"shop_id": shopid, "wait_ms":5000}

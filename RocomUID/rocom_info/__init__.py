@@ -9,6 +9,7 @@ from .draw_egg_image import draw_egg_info
 from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name, rocom_egg_conf,get_pet_info,pet_list
 from ..rocom_config.rocom_config import RC_CONFIG
+from ..utils.rocom_api import wegame_api
 
 async def is_numeric(string):
     try:
@@ -16,6 +17,81 @@ async def is_numeric(string):
         return True
     except ValueError:
         return False
+
+def is_config_enabled(config_key: str) -> bool:
+    value = RC_CONFIG.get_config(config_key).data
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {'true', '1', 'yes', 'on', '开启'}
+
+def _get_first_list(data):
+    if isinstance(data, list):
+        return data
+    if not isinstance(data, dict):
+        return []
+    for key in ('items', 'list', 'records', 'results', 'matches', 'pets', 'data'):
+        value = data.get(key)
+        if isinstance(value, list):
+            return value
+    for value in data.values():
+        if isinstance(value, list):
+            return value
+    return []
+
+def _extract_egg_item(item):
+    if not isinstance(item, dict):
+        return None
+
+    pet_info = item.get('pet') or item.get('base_pet') or item.get('pet_info') or item
+    if not isinstance(pet_info, dict):
+        pet_info = item
+
+    pet_id = (
+        pet_info.get('pet_id') or pet_info.get('pet_base_id') or pet_info.get('base_id')
+        or pet_info.get('id') or item.get('pet_id') or item.get('pet_base_id')
+        or item.get('base_id') or item.get('id')
+    )
+    name = (
+        pet_info.get('name') or pet_info.get('pet_name') or pet_info.get('base_name')
+        or item.get('name') or item.get('pet_name') or item.get('base_name')
+    )
+
+    if name is None:
+        return None
+
+    return str(pet_id or ''), str(name)
+
+def _extract_egg_results(data):
+    find_list = []
+    seen_names = set()
+    for item in _get_first_list(data):
+        egg_item = _extract_egg_item(item)
+        if egg_item is None:
+            continue
+        pet_id, name = egg_item
+        if name in seen_names:
+            continue
+        seen_names.add(name)
+        find_list.append((pet_id, name))
+    return find_list
+
+async def _search_egg_from_local(length: str, weight: str, is_tongcheng_flag: bool):
+    find_list = []
+    for pet_id, item in pet_list.items():
+        if item.get('breeding',None) is None:
+            continue
+        if item['breeding'].get('random_eggs_group', '') == '':
+            continue
+        if is_tongcheng_flag and '同乘' not in item.get('talent_random_list',[]):
+            continue
+        find_flag = 0
+        if item['breeding']['height_low'] <= float(length) * 100 and float(length) * 100 <= item['breeding']['height_high']:
+            find_flag = find_flag + 1
+        if item['breeding']['weight_low'] <= float(weight) * 1000 and float(weight) * 1000 <= item['breeding']['weight_high']:
+            find_flag = find_flag + 1
+        if find_flag == 2 and item["name"] not in [n for _, n in find_list]:
+            find_list.append((pet_id, item["name"]))
+    return find_list
 
 sv_rc_rocom_info = SV('rc基础信息查询', priority=5)
 
@@ -39,21 +115,21 @@ async def get_rocom_egg_name(bot: Bot, ev: Event):
     is_tongcheng_flag = False
     if '同乘' in egg_type:
         is_tongcheng_flag = True
-    find_list = []
-    for pet_id, item in pet_list.items():
-        if item.get('breeding',None) is None:
-            continue
-        if item['breeding'].get('random_eggs_group', '') == '':
-            continue
-        if is_tongcheng_flag and '同乘' not in item.get('talent_random_list',[]):
-            continue
-        find_flag = 0
-        if item['breeding']['height_low'] <= float(length) * 100 and float(length) * 100 <= item['breeding']['height_high']:
-            find_flag = find_flag + 1
-        if item['breeding']['weight_low'] <= float(weight) * 1000 and float(weight) * 1000 <= item['breeding']['weight_high']:
-            find_flag = find_flag + 1
-        if find_flag == 2 and item["name"] not in [n for _, n in find_list]:
-            find_list.append((pet_id, item["name"]))
+    if is_config_enabled('RC_egg_predict_api_enable'):
+        egg_data = await wegame_api.search_egg(float(length), float(weight))
+        if egg_data is None:
+            return await bot.send(
+                f"精灵蛋预测接口查询失败：{wegame_api.last_error_message or '未知错误'}",
+                at_sender=True,
+            )
+        find_list = _extract_egg_results(egg_data)
+        if is_tongcheng_flag:
+            find_list = [
+                (pet_id, name) for pet_id, name in find_list
+                if str(pet_id) in pet_list and '同乘' in pet_list[str(pet_id)].get('talent_random_list', [])
+            ]
+    else:
+        find_list = await _search_egg_from_local(length, weight, is_tongcheng_flag)
     # 渲染样式：图片版（默认，我的出图）/ 文字版，控制台 RC_egg_render_style 可切
     render_style = str(RC_CONFIG.get_config('RC_egg_render_style').data or '图片版')
     if render_style != '文字版':
