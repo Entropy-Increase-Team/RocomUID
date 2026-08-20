@@ -619,6 +619,58 @@ class WegameApi():
             self._wegame_headers(),
             params=params,
         )
+
+    async def get_wiki_pet_by_name(self, name: str) -> Optional[Dict]:
+        """按名称查询魔法书精灵，并获取图鉴绘制所需的分段数据。"""
+        search_data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/wiki/pets",
+            self._wegame_headers(),
+            params={"q": name, "page_no": 1, "page_size": 20},
+        )
+        if search_data is None:
+            return None
+
+        items = search_data.get("items", [])
+        if not isinstance(items, list):
+            items = []
+        exact_item = next(
+            (
+                item for item in items
+                if isinstance(item, dict)
+                and name in {
+                    str(item.get("name", "")),
+                    f'{item.get("name", "")}{item.get("form", "")}',
+                    f'{item.get("form", "")}{item.get("name", "")}',
+                }
+            ),
+            None,
+        )
+        pet_item = exact_item or next(
+            (item for item in items if isinstance(item, dict)), None
+        )
+        if not pet_item or not pet_item.get("pet_id"):
+            self._set_last_error("魔法书未找到该精灵")
+            return None
+
+        pet_id = int(pet_item["pet_id"])
+        paths = {
+            "overview": f"/api/v1/games/rocom/wiki/pets/{pet_id}",
+            "profile": f"/api/v1/games/rocom/wiki/pets/{pet_id}/profile",
+            "family": f"/api/v1/games/rocom/wiki/pets/{pet_id}/family",
+            "skills": f"/api/v1/games/rocom/wiki/pets/{pet_id}/skills",
+        }
+        results = await asyncio.gather(
+            *(
+                self._request("GET", path, self._wegame_headers())
+                for path in paths.values()
+            )
+        )
+        if any(result is None for result in results):
+            if not self.last_error_message:
+                self._set_last_error("魔法书精灵详情数据不完整")
+            return None
+        return dict(zip(paths, results))
     
     async def get_merchant_info_cs(self, shopid):
         params = {"shop_id": shopid, "wait_ms":5000}

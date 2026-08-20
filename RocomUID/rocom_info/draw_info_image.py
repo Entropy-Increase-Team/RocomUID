@@ -1,9 +1,12 @@
 import re
 import math
+import asyncio
 from pathlib import Path
 import os
 import time
 from PIL import Image, ImageDraw
+from io import BytesIO
+import httpx
 from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH, ROCOM_CHARACTER_PATH
@@ -25,6 +28,7 @@ skill_mask = Image.open(TEXT_PATH / 'skill_mask.png')
 cost_star = Image.open(TEXT_PATH / 'star.png')
 footer = Image.open(TEXT_PATH / 'footer.png')
 info_text_color = (100, 92, 79)
+_remote_image_cache = {}
 
 SHUX_LIST_XX = ['物攻', '魔攻', '物防', '魔防', '速度']
 SHUX_LIST_DRAW = {
@@ -125,6 +129,43 @@ async def get_min_shuxing_num(zhongzu, shuxing_type = ''):
     shuxing_num = math.floor((jichu_num + (xishu * 60)) * 0.9 + chengzhang_num)
     return shuxing_num
 
+async def _open_image(source, fallback, client=None):
+    """打开本地资源或魔法书返回的图片 URL，失败时使用本地兜底图。"""
+    path = fallback if isinstance(fallback, Path) else Path(fallback)
+    if path.exists():
+        return Image.open(path).convert('RGBA')
+    if isinstance(source, str) and source.startswith(('http://', 'https://')):
+        if source in _remote_image_cache:
+            return _remote_image_cache[source].copy()
+        try:
+            if client is None:
+                async with httpx.AsyncClient(timeout=10) as temporary_client:
+                    response = await temporary_client.get(source)
+            else:
+                response = await client.get(source)
+            response.raise_for_status()
+            image = Image.open(BytesIO(response.content)).convert('RGBA')
+            _remote_image_cache[source] = image
+            return image.copy()
+        except Exception:
+            pass
+    return Image.open(TEXT_PATH / 'img_linshi.png').convert('RGBA')
+
+async def _prefetch_remote_images(urls, client):
+    async def fetch(url):
+        if not url or url in _remote_image_cache:
+            return
+        try:
+            response = await client.get(url)
+            response.raise_for_status()
+            _remote_image_cache[url] = Image.open(
+                BytesIO(response.content)
+            ).convert('RGBA')
+        except Exception:
+            pass
+
+    await asyncio.gather(*(fetch(url) for url in set(urls)))
+
 async def draw_rocom_info(rocom_info):
     bg_height = 1030
     skill_level_list = rocom_info["level_skill_list"]
@@ -143,6 +184,21 @@ async def draw_rocom_info(rocom_info):
         skill_stone_num = len(skill_stone_list)
         if skill_stone_num > 0:
             bg_height += math.ceil(skill_stone_num / 5) * 99 + 80
+
+    remote_urls = [
+        item.get('icon_url', '')
+        for item in (*skill_level_list, *skill_blood_list, *skill_stone_list)
+        if item.get('icon_url')
+        and not (ROCOM_SKILL_PATH / f'{item.get("iconid", 0)}.png').exists()
+    ]
+    remote_urls.extend(
+        item.get('icon_url', '')
+        for item in rocom_info['evolution_list']
+        if item.get('icon_url')
+        and not (ROCOM_ICON_PATH / f'{item.get("icon", "JL_dimo")}.png').exists()
+    )
+    async with httpx.AsyncClient(timeout=10, limits=httpx.Limits(max_connections=20)) as image_client:
+        await _prefetch_remote_images(remote_urls, image_client)
     
     tx_line_height = 0
     txname = rocom_info["feature"].get("name",'')
@@ -278,7 +334,10 @@ async def draw_rocom_info(rocom_info):
     for index, item in enumerate(rocom_info["evolution_list"]):
         icon_x = x_num + jinhua_icon_list[f'{jinhua_num}_{index}']
         img.paste(jinhua_bg, (icon_x, y_num), jinhua_bg)
-        pokemon_img = Image.open(ROCOM_ICON_PATH / f'{item["icon"]}.png').convert('RGBA').resize((150, 150))
+        pokemon_img = await _open_image(
+            item.get('icon_url', ''), ROCOM_ICON_PATH / f'{item["icon"]}.png', image_client
+        )
+        pokemon_img = pokemon_img.resize((150, 150))
         img.paste(pokemon_img, (icon_x - 5, y_num + 10), pokemon_img)
         img_draw.text(
             (icon_x + 70, y_num + 215),
@@ -410,9 +469,8 @@ async def draw_rocom_info(rocom_info):
                 'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
-            if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
-            skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
+            skill_image = await _open_image(jineng.get('icon_url', ''), jineng_icon, image_client)
+            skill_image = skill_image.resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
@@ -458,9 +516,8 @@ async def draw_rocom_info(rocom_info):
                 'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
-            if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
-            skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
+            skill_image = await _open_image(jineng.get('icon_url', ''), jineng_icon, image_client)
+            skill_image = skill_image.resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
@@ -508,9 +565,8 @@ async def draw_rocom_info(rocom_info):
                 'RGBA', (207, 99), SHUX_LIST_DRAW[family]
             )
             jineng_icon = ROCOM_SKILL_PATH / f'{jineng["iconid"]}.png'
-            if not os.path.exists(jineng_icon):
-                jineng_icon = ROCOM_SKILL_PATH / f'img_linshi.png'
-            skill_image = Image.open(jineng_icon).convert('RGBA').resize((67, 67))
+            skill_image = await _open_image(jineng.get('icon_url', ''), jineng_icon, image_client)
+            skill_image = skill_image.resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)

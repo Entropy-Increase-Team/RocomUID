@@ -54,8 +54,13 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
         ],
     ),
     "RC_egg_predict_api_enable": GsBoolConfig(
-        "精灵蛋预测使用接口",
-        "开启后查蛋/精灵蛋预测使用接口查询；关闭后使用本地数据预测",
+        "精灵蛋预测使用魔法书接口",
+        "开启后查蛋/精灵蛋预测使用魔法书接口查询；关闭后使用本地数据预测",
+        False,
+    ),
+    "RC_handbook_magic_book_enable": GsBoolConfig(
+        "图鉴使用魔法书接口",
+        "开启后精灵图鉴使用洛克魔法书 Wiki 接口数据；关闭后使用本地图鉴数据",
         False,
     ),
     "RC_garden_render_style": GsStrConfig(

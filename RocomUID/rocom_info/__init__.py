@@ -75,6 +75,92 @@ def _extract_egg_results(data):
         find_list.append((pet_id, name))
     return find_list
 
+def _convert_magic_book_skill(item):
+    return {
+        'id': item.get('skill_id', 0),
+        'name': item.get('name', '未知技能'),
+        'level': item.get('level', 0),
+        'cost': str(item.get('cost', '0')),
+        'iconid': item.get('skill_id', 0),
+        'icon_url': item.get('icon', ''),
+        'power': str(item.get('power', '0')),
+        'families': item.get('families') or item.get('element_type', {}).get('name', '无'),
+        'desc': item.get('desc', ''),
+    }
+
+def _convert_magic_book_pet(data):
+    overview = data['overview']
+    profile = data['profile']
+    family = data['family']
+    skills = data['skills']
+    pet_id = str(overview['pet_id'])
+    local = copy.deepcopy(pet_list.get(pet_id, {}))
+    local_evolutions = {
+        str(item.get('pet_id')): item
+        for item in local.get('evolution_list', [])
+    }
+    attributes = profile.get('attributes', {})
+
+    local.update({
+        'id': overview['pet_id'],
+        'name': overview.get('name', local.get('name', '未知精灵')),
+        'form': overview.get('form') or local.get('form', ''),
+        'icon': local.get('icon', 'JL_dimo'),
+        'unit_type': overview.get('type_names') or local.get('unit_type', ['无']),
+        'egg_group': overview.get('egg_group_names') or [],
+        'description': profile.get('description') or overview.get('description', ''),
+        'attribute': {
+            'attr_hp': attributes.get('hp', 0),
+            'attr_atk': attributes.get('physical_attack', 0),
+            'attr_spatk': attributes.get('magic_attack', 0),
+            'attr_def': attributes.get('physical_defense', 0),
+            'attr_spdef': attributes.get('magic_defense', 0),
+            'attr_spd': attributes.get('speed', 0),
+        },
+        'feature': {
+            'id': overview.get('feature', {}).get('skill_id', 200191),
+            'name': overview.get('feature', {}).get('name', ''),
+            'desc': overview.get('feature', {}).get('desc', ''),
+        },
+        'evolution_list': [],
+        'level_skill_list': [_convert_magic_book_skill(item) for item in skills.get('level', [])],
+        'blood_skill_list': [_convert_magic_book_skill(item) for item in skills.get('blood', [])],
+        'machine_skill_list': [_convert_magic_book_skill(item) for item in skills.get('machine', [])],
+    })
+
+    for member in family.get('members', []):
+        member_id = str(member.get('pet_id', ''))
+        fallback = local_evolutions.get(member_id, {})
+        local['evolution_list'].append({
+            'pet_id': member.get('pet_id', 0),
+            'name': member.get('name', ''),
+            'level': fallback.get('level', member.get('stage', 0)),
+            'icon': fallback.get('icon', pet_list.get(member_id, {}).get('icon', 'JL_dimo')),
+            'icon_url': member.get('icon', ''),
+            'evolution_need': fallback.get('evolution_need', ''),
+        })
+    if not local['evolution_list']:
+        local['evolution_list'] = copy.deepcopy(
+            pet_list.get(pet_id, {}).get('evolution_list', [])
+        )
+    if not local['evolution_list']:
+        local_match = next(
+            (item for item in pet_list.values()
+             if item.get('name') == overview.get('name')),
+            None,
+        )
+        if local_match:
+            local['evolution_list'] = copy.deepcopy(
+                local_match.get('evolution_list', [])
+            )
+    if not local['evolution_list']:
+        local['evolution_list'] = [{
+            'pet_id': overview['pet_id'], 'name': local['name'], 'level': 0,
+            'icon': local['icon'], 'evolution_need': '',
+        }]
+    local['evolution_list'] = local['evolution_list'][:3]
+    return local
+
 async def _search_egg_from_local(length: str, weight: str, is_tongcheng_flag: bool):
     find_list = []
     for pet_id, item in pet_list.items():
@@ -200,10 +286,19 @@ async def get_rocom_info_img(bot: Bot, ev: Event):
     args = ev.text.split()
     if len(args) < 1:
         return await bot.send('请输入需要查询的精灵名称', at_sender=True)
-    pet_id = await get_rocom_name(args[0])
-    if pet_id == 0:
-        return await bot.send('精灵名称不存在，请输入正确的精灵名称', at_sender=True)
-    pet_info = await get_pet_info(pet_id)
+    if is_config_enabled('RC_handbook_magic_book_enable'):
+        magic_book_data = await wegame_api.get_wiki_pet_by_name(args[0])
+        if magic_book_data is None:
+            return await bot.send(
+                f"魔法书图鉴查询失败：{wegame_api.last_error_message or '未知错误'}",
+                at_sender=True,
+            )
+        pet_info = _convert_magic_book_pet(magic_book_data)
+    else:
+        pet_id = await get_rocom_name(args[0])
+        if pet_id == 0:
+            return await bot.send('精灵名称不存在，请输入正确的精灵名称', at_sender=True)
+        pet_info = await get_pet_info(pet_id)
     im = await draw_rocom_info(pet_info)
     await bot.send(im, at_sender=True)
     
