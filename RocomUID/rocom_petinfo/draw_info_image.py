@@ -54,6 +54,7 @@ SHUX_SKILLLIST_DRAW = {
     '普通': (63, 137, 180),
     '水': (106, 169, 254),
     '无': (186, 187, 198),
+    '未知': (186, 187, 198),
     '武': (255, 150, 54),
     '翼': (62, 199, 202),
     '幽': (148, 70, 236),
@@ -336,13 +337,18 @@ async def draw_pet_info(uid, pet_data):
             jineng = skill.name
             info_skill = await get_skill_info(skill.id)
             jineng_img = Image.new(
-                'RGBA', (520, 220), SHUX_SKILLLIST_DRAW[info_skill['families']]
+                'RGBA', (520, 220), SHUX_SKILLLIST_DRAW.get(
+                    info_skill['families'], SHUX_SKILLLIST_DRAW['未知']
+                )
             )
             skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill.iconid}.png").convert('RGBA').resize((158, 158))
             jineng_temp = Image.new('RGBA', (520, 220))
             jineng_temp.paste(jineng_img, (0, 0), bg_skill)
             jineng_temp.paste(skill_image, (35, 32), skill_image)
-            sx_image = Image.open(TEXT_PATH / '属性' / f"{info_skill['families']}.png").convert('RGBA').resize((75, 75))
+            family_icon = TEXT_PATH / '属性' / f"{info_skill['families']}.png"
+            if not os.path.exists(family_icon):
+                family_icon = TEXT_PATH / '属性' / '2.png'
+            sx_image = Image.open(family_icon).convert('RGBA').resize((75, 75))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -389,13 +395,18 @@ async def draw_pet_info(uid, pet_data):
             jn_x = shul - (5 * jn_y)
             info_skill = await get_skill_info(skill.id)
             jineng_img = Image.new(
-                'RGBA', (207, 99), SHUX_SKILLLIST_DRAW[info_skill['families']]
+                'RGBA', (207, 99), SHUX_SKILLLIST_DRAW.get(
+                    info_skill['families'], SHUX_SKILLLIST_DRAW['未知']
+                )
             )
             skill_image = Image.open(ROCOM_SKILL_PATH / f"{skill.iconid}.png").convert('RGBA').resize((67, 67))
             jineng_temp = Image.new('RGBA', (207, 99))
             jineng_temp.paste(jineng_img, (0, 0), skill_bg)
             jineng_temp.paste(skill_image, (15, 16), skill_image)
-            sx_image = Image.open(TEXT_PATH / '属性' / f"{info_skill['families']}.png").convert('RGBA').resize((45, 45))
+            family_icon = TEXT_PATH / '属性' / f"{info_skill['families']}.png"
+            if not os.path.exists(family_icon):
+                family_icon = TEXT_PATH / '属性' / '2.png'
+            sx_image = Image.open(family_icon).convert('RGBA').resize((45, 45))
             jineng_temp.paste(sx_image, (-5, -5), sx_image)
             jineng_draw = ImageDraw.Draw(jineng_temp)
             jineng_draw.text(
@@ -787,10 +798,10 @@ async def draw_pet_home_brief(uid, pet_data, home_name):
 
 async def _draw_home_skill(skill, size: str = 'small'):
     info_skill = await get_skill_info(skill.id)
-    family = info_skill.get('families', '无')
+    family = info_skill.get('families', '未知')
     if family == 'SDT_NONE':
-        family = '无'
-    bg_color = SHUX_SKILLLIST_DRAW.get(family, SHUX_SKILLLIST_DRAW['无'])
+        family = '未知'
+    bg_color = SHUX_SKILLLIST_DRAW.get(family, SHUX_SKILLLIST_DRAW['未知'])
     if size == 'equip':
         card_w, card_h = 160, 64
         icon_size = 54

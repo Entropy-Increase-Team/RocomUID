@@ -150,6 +150,7 @@ async def api_to_dict_home_info(
 async def api_to_dict_pet_info(
     uid: Union[str, None] = None,
     save_path: Union[Path, None] = None,
+    include_skills: bool = True,
 ):
     home_data = await wegame_api.get_home_pet_data(uid)
     if home_data is None:
@@ -192,8 +193,9 @@ async def api_to_dict_pet_info(
 
         pet_skill = []
         pet_skill_equip = []
-        pet_feature = {}
-        for item in petinfo['display_info']['skill']['skill_data']:
+        pet_feature = {'id': 0, 'name': '', 'desc': ''}
+        skill_data = petinfo['display_info']['skill']['skill_data'] if include_skills else []
+        for item in skill_data:
             if item["type"] == 1:
                 info_skill = await get_skill_info(item["id"])
                 skill_info = {

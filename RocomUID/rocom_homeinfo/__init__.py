@@ -85,16 +85,16 @@ def load_pet_cache(uid: str):
     )
 
 
-async def get_my_pet_info_data(uid: str):
+async def get_my_pet_info_data(uid: str, include_skills: bool):
     if is_config_enabled('RC_home_cache_enable'):
         local_pet_data = load_pet_cache(uid)
         if local_pet_data is not None:
             return local_pet_data
 
-    use_cache = is_config_enabled('RC_home_cache_enable')
     return await api_to_dict_pet_info(
         uid,
-        PLAYER_PATH if use_cache else None,
+        PLAYER_PATH if include_skills and is_config_enabled('RC_home_cache_enable') else None,
+        include_skills=include_skills,
     )
 
 async def _resolve_uid(bot: Bot, ev: Event, text=None):
@@ -145,7 +145,7 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
     await bot.send(f'正在获取[UID]{uid}的{info_name}信息，请稍后')
 
     if is_pet_home:
-        pet_result = await get_my_pet_info_data(uid)
+        pet_result = await get_my_pet_info_data(uid, is_pet_home_detail)
         if isinstance(pet_result, str):
             return await bot.send(pet_result)
         home_name, pet_data = pet_result
