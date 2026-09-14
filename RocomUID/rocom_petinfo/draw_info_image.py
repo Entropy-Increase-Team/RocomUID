@@ -7,7 +7,7 @@ import time
 from PIL import Image, ImageDraw, ImageChops
 from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
-from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_CHARACTER_PATH, ROCOM_SKILL_PATH
+from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
 from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
 from ..utils.convert import get_pet_info, get_skill_info, pet_list, nature_map
@@ -291,9 +291,9 @@ async def draw_pet_info(uid, pet_data):
         'lm',
     )
     start_height += 70
-    tx_icon = ROCOM_CHARACTER_PATH / f"{pet_data.feature.id}.png"
+    tx_icon = ROCOM_SKILL_PATH / f"{pet_data.feature.id}.png"
     if not os.path.exists(tx_icon):
-        tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
+        tx_icon = ROCOM_SKILL_PATH / '200191.png'
     tx_img = Image.open(tx_icon).convert('RGBA').resize((121, 121))
     img.paste(tx_img, (90, start_height), skill_mask)
     start_height += 20
@@ -955,9 +955,9 @@ async def draw_pet_home(uid, pet_data, home_name):
 
         img.paste(home_title_small, (276, y0 + 270), home_title_small)
         img_draw.text((329, y0 + 293), '精灵特性', (255, 255, 255), rc_font_16, 'lm')
-        tx_icon = ROCOM_CHARACTER_PATH / f"{pet_info.feature.id}.png"
+        tx_icon = ROCOM_SKILL_PATH / f"{pet_info.feature.id}.png"
         if not os.path.exists(tx_icon):
-            tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
+            tx_icon = ROCOM_SKILL_PATH / '200191.png'
         tx_img = Image.open(tx_icon).convert('RGBA').resize((58, 58))
         skill_mask_small = skill_mask.resize((58, 58))
         img.paste(tx_img, (283, y0 + 322), skill_mask_small)

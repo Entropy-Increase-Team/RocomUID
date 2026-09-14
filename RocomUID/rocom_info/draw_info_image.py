@@ -9,7 +9,7 @@ from io import BytesIO
 import httpx
 from ..utils.image.image_tools import get_text_line
 from gsuid_core.utils.image.convert import convert_img
-from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH, ROCOM_CHARACTER_PATH
+from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH
 from ..utils.fonts.rocom_fonts import rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, skill_font_22, skill_font_32
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -421,9 +421,9 @@ async def draw_rocom_info(rocom_info):
         'lm',
     )
     start_height += 70
-    tx_icon = ROCOM_CHARACTER_PATH / f'{rocom_info["feature"].get("id","200191")}.png'
+    tx_icon = ROCOM_SKILL_PATH / f'{rocom_info["feature"].get("id","200191")}.png'
     if not os.path.exists(tx_icon):
-        tx_icon = ROCOM_CHARACTER_PATH / '200191.png'
+        tx_icon = ROCOM_SKILL_PATH / '200191.png'
     tx_img = Image.open(tx_icon).convert('RGBA').resize((121, 121))
     img.paste(tx_img, (90, start_height), skill_mask)
     start_height += 20

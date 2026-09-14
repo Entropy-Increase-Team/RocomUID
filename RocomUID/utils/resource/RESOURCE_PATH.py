@@ -12,8 +12,8 @@ PLAYER_PATH = MAIN_PATH / 'players'
 RESOURCE_PATH = MAIN_PATH / 'resource'
 
 ROCOM_ICON_PATH = RESOURCE_PATH / 'rocomicon'
+# 技能图标 + 特性图标统一存放于 skillicon
 ROCOM_SKILL_PATH = RESOURCE_PATH / 'skillicon'
-ROCOM_CHARACTER_PATH = RESOURCE_PATH / 'characteristicicon'
 ROCOM_HEAD_PATH = RESOURCE_PATH / 'headicon'
 
 
@@ -24,7 +24,6 @@ def init_dir():
         RESOURCE_PATH,
         ROCOM_ICON_PATH,
         ROCOM_SKILL_PATH,
-        ROCOM_CHARACTER_PATH,
         ROCOM_HEAD_PATH,
     ]:
         i.mkdir(parents=True, exist_ok=True)
