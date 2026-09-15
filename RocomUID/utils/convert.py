@@ -98,6 +98,9 @@ EGG_GROUP_NAME = {
     15: '机械组',
 }
 
+# “未发现”蛋组（id=1）的精灵无法生蛋
+UNDISCOVERED_EGG_GROUP = EGG_GROUP_NAME[1]
+
 # ------------------------------ 天赋 ------------------------------
 # 随机天赋名称表，索引即天赋随机 id
 TALENT_RANDOM_LIST = (

@@ -95,7 +95,7 @@
 	  {
         "name": "配种",
         "desc": "查询配种情况",
-        "eg": "配种[母精灵][父精灵]",
+        "eg": "配种[精灵] / [母本] [父本]",
         "need_ck": false,
         "need_sk": false,
         "need_admin": false

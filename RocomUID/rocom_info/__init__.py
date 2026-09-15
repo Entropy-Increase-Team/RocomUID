@@ -6,7 +6,9 @@ from gsuid_core.models import Event
 from .draw_info_image import draw_rocom_info
 from .draw_egg_image import draw_egg_info
 from ..utils.error_reply import prefix as P
-from ..utils.convert import get_rocom_name, get_pet_info, pet_list, skill_list
+from ..utils.convert import (
+    get_rocom_name, get_pet_info, pet_list, skill_list, UNDISCOVERED_EGG_GROUP,
+)
 from ..rocom_config.rocom_config import RC_CONFIG
 from ..utils.rocom_api import wegame_api
 
@@ -240,32 +242,61 @@ async def get_rocom_egg_name(bot: Bot, ev: Event):
         mes += f"\n范围还在更新中，结果仅供参考\n可输入{P}查蛋 [尺寸] [重量] [炫彩/同乘(可选)]查询精灵蛋信息"
     return await bot.send(mes, at_sender=True)
 
+def _egg_group_str(pet) -> str:
+    return '、'.join(pet.get('egg_group') or [])
+
+
+def _cannot_lay_egg(pet) -> bool:
+    """蛋组为空或含“未发现”的精灵无法生蛋。"""
+    group = pet.get('egg_group') or []
+    return (not group) or (UNDISCOVERED_EGG_GROUP in group)
+
+
 @sv_rc_rocom_info.on_command('配种')
 async def get_rocom_egg_info(bot: Bot, ev: Event):
     args = ev.text.split()
-    if len(args) < 2:
+    if len(args) < 1:
         return await bot.send('请输入需要查询配种信息的父母精灵名称', at_sender=True)
+
+    if len(args) == 1:
+        rocom_id = await get_rocom_name(args[0])
+        if rocom_id == 0:
+            return await bot.send('精灵名不存在，请输入正确的精灵名称', at_sender=True)
+        pet = pet_list[str(rocom_id)]
+        if _cannot_lay_egg(pet):
+            return await bot.send('精灵无法生蛋哦~', at_sender=True)
+        group_str = _egg_group_str(pet)
+        return await bot.send(
+            f"配种查询结果\n精灵：{pet['name']}\n"
+            f"•  {pet['name']}蛋组：{group_str}\n"
+            f"可以和以下蛋组的精灵生蛋：{group_str}",
+            at_sender=True,
+        )
+
     rocom_id1 = await get_rocom_name(args[0])
     if rocom_id1 == 0:
         return await bot.send('精灵名不存在，请输入正确的精灵名称', at_sender=True)
     rocom_id2 = await get_rocom_name(args[1])
     if rocom_id2 == 0:
         return await bot.send('精灵名不存在，请输入正确的精灵名称', at_sender=True)
-        
-    group1 = pet_list[str(rocom_id1)]["egg_group"]
-    group2 = pet_list[str(rocom_id2)]["egg_group"]
-    danzu_str1 = ' '.join(group1)
-    danzu_str2 = ' '.join(group2)
-    peizhong_flag = 0
-    for item in group1:
-        if item in group2:
-            peizhong_flag = 1
-    mes = f"{pet_list[str(rocom_id1)]['name']}的蛋组为\n{danzu_str1}\n{pet_list[str(rocom_id2)]['name']}的蛋组为\n{danzu_str2}"
-    if peizhong_flag == 0:
-        await bot.send(f'{mes}\n双方没有相同的蛋组，无法进行配种哦', at_sender=True)
-    else:
-        await bot.send(f'{mes}\n双方拥有相同的蛋组，可以进行配种哦~', at_sender=True)
-        
+
+    pet1 = pet_list[str(rocom_id1)]
+    pet2 = pet_list[str(rocom_id2)]
+    group1 = pet1.get('egg_group') or []
+    group2 = pet2.get('egg_group') or []
+
+    if _cannot_lay_egg(pet1) or _cannot_lay_egg(pet2):
+        return await bot.send('精灵无法生蛋哦~', at_sender=True)
+
+    mes = (
+        f"配种查询结果\n父母精灵：{pet1['name']} × {pet2['name']}\n"
+        f"•  {pet1['name']}蛋组：{_egg_group_str(pet1)}\n"
+        f"•  {pet2['name']}蛋组：{_egg_group_str(pet2)}"
+    )
+    if any(item in group2 for item in group1):
+        return await bot.send(f'{mes}\n双方拥有相同的蛋组，可以进行配种哦~', at_sender=True)
+    return await bot.send(f'{mes}\n双方没有相同的蛋组，无法进行配种哦', at_sender=True)
+
 @sv_rc_rocom_info.on_command('技能信息')
 async def get_rocom_skill_info(bot: Bot, ev: Event):
     args = ev.text.split()
