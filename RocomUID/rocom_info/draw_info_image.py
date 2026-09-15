@@ -7,7 +7,7 @@ import time
 from PIL import Image, ImageDraw
 from io import BytesIO
 import httpx
-from ..utils.image.image_tools import get_text_line
+from ..utils.image.image_tools import get_text_line, get_footer_w, FOOTER
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH
 from ..utils.fonts.rocom_fonts import rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, skill_font_22, skill_font_32
@@ -26,7 +26,7 @@ up_title = Image.open(TEXT_PATH / 'up_title.png')
 jinhua_bg = Image.open(TEXT_PATH / 'jinhua_bg.png')
 skill_mask = Image.open(TEXT_PATH / 'skill_mask.png')
 cost_star = Image.open(TEXT_PATH / 'star.png')
-footer = Image.open(TEXT_PATH / 'footer.png')
+footer = get_footer_w(FOOTER)
 info_text_color = (100, 92, 79)
 _remote_image_cache = {}
 

@@ -5,7 +5,7 @@ import os
 import copy
 import time
 from PIL import Image, ImageDraw, ImageChops
-from ..utils.image.image_tools import get_text_line
+from ..utils.image.image_tools import get_text_line, get_footer_w, FOOTER
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_SKILL_PATH
 from ..utils.map.rocom_map import skill_list
@@ -32,7 +32,7 @@ jinhua_bg = Image.open(TEXT_PATH / 'jinhua_bg.png')
 skill_mask = Image.open(TEXT_PATH / 'skill_mask.png')
 cost_star = Image.open(TEXT_PATH / 'star.png')
 star_cost = Image.open(TEXT_PATH / 'star.png').convert('RGBA').resize((45, 46))
-footer = Image.open(TEXT_PATH / 'footer.png')
+footer = get_footer_w(FOOTER) 
 info_text_color = (100, 92, 79)
 home_title_small = rocom_title.resize((int(rocom_title.width * 0.8), int(rocom_title.height * 0.8)))
 

@@ -15,6 +15,7 @@ from gsuid_core.utils.image.image_tools import (
     get_qq_avatar,
 )
 from ..rocom_config.rocom_config import RC_CONFIG
+from ..utils.image.image_tools import get_footer_w, FOOTER_SOURCE
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
 top_bg = Image.open(TEXT_PATH / 'top_bg.png')
@@ -24,7 +25,7 @@ title_fg = Image.open(TEXT_PATH / 'title_fg.png')
 banner_bg = Image.open(TEXT_PATH / 'banner_bg.png')
 pet_bg = Image.open(TEXT_PATH / 'pet_bg.png')
 plant_bg = Image.open(TEXT_PATH / 'plant_bg.png')
-footer = Image.open(TEXT_PATH / 'footer.png')
+footer = get_footer_w(FOOTER_SOURCE)
 info_text_color = (66, 66, 66)
 
 def is_config_enabled(config_key: str) -> bool:

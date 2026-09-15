@@ -8,7 +8,7 @@ from gsuid_core.help.model import PluginHelp
 from gsuid_core.sv import get_plugin_available_prefix
 from gsuid_core.help.draw_new_plugin_help import get_new_help
 from ..version import RocomUID_version
-from ..utils.image.image_tools import get_footer
+from ..utils.image.image_tools import get_footer, FOOTER_HELP
 
 ICON = Path(__file__).parent.parent.parent / "ICON.png"
 HELP_DATA = Path(__file__).parent / "help.json"
@@ -35,6 +35,6 @@ async def get_help():
         cag_bg=Image.open(TEXT_PATH / "cag_bg.png"),
         item_bg=Image.open(TEXT_PATH / "item.png"),
         icon_path=ICON_PATH,
-        footer=get_footer(),
+        footer=get_footer(FOOTER_HELP),
         enable_cache=True,
     )

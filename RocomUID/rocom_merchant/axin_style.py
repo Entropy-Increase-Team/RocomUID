@@ -14,6 +14,7 @@ from gsuid_core.utils.image.image_tools import get_pic
 
 from ..utils.fonts.rocom_fonts import rc_font_34, rc_font_40, rc_font_46, rc_font_84
 from ..utils.image import fairytale as ft
+from ..utils.image.image_tools import get_footer, FOOTER
 
 # 名称自动缩字号（放不下就降一档），避免长名溢出卡框
 _NAME_FONTS_H = [rc_font_46, rc_font_40, rc_font_34]
@@ -252,7 +253,7 @@ def _compose(merchant_info):
     long_top_pad = PAD if rotating else TAG_TOP_PAD
     long_board = _draw_panel(longterm, 2, 150, _load("panel_big.png"), top_pad=long_top_pad) if longterm else None
 
-    footer_src = _load("footer.png")
+    footer_src = get_footer(FOOTER)
     footer = ft.tint(footer_src, FOOTER_COLOR) if footer_src else None
     foot_h = (footer.height + 24) if footer else 0
 

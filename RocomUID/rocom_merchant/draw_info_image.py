@@ -11,6 +11,7 @@ from gsuid_core.utils.image.image_tools import get_pic
 
 from ..rocom_config.rocom_config import RC_CONFIG
 from ..utils.fonts.rocom_fonts import rc_font_40, skill_font_18, skill_font_26
+from ..utils.image.image_tools import get_footer_w, FOOTER
 from .axin_style import draw_merchant_info_axin
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -26,7 +27,7 @@ coin_icon = Image.open(TEXT_PATH / 'coin.png').convert('RGBA')
 classic_badge = Image.open(TEXT_PATH / 'badge.png').convert('RGBA')
 classic_banner = Image.open(TEXT_PATH / 'banner.png').convert('RGBA')
 classic_susume = Image.open(TEXT_PATH / 'susume.png').convert('RGBA')
-classic_footer = Image.open(TEXT_PATH / 'footer.png').convert('RGBA')
+classic_footer = get_footer_w(FOOTER)
 classic_top_img = Image.open(TEXT_PATH / 'bg_top.jpg').convert('RGB')
 classic_footer_img = Image.open(TEXT_PATH / 'bg_footer.jpg').convert('RGB')
 

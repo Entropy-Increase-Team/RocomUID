@@ -5,7 +5,7 @@ import os
 import copy
 import time
 from PIL import Image, ImageDraw, ImageChops
-from ..utils.image.image_tools import get_text_line
+from ..utils.image.image_tools import get_text_line, get_footer_w, FOOTER
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH
 from ..utils.fonts.rocom_fonts import rc_font_22, rc_font_28, rc_font_44, rc_font_42, skill_font_24, skill_font_42
@@ -26,7 +26,7 @@ pet_bg = Image.open(TEXT_PATH / 'pet_bg.png')
 yise_overlay = Image.open(TEXT_PATH / 'yise_overlay.png')
 xuancai_overlay = Image.open(TEXT_PATH / 'xuancai_overlay.png')
 pet_rocom = Image.open(TEXT_PATH / 'pet_rocom.png')
-footer = Image.open(TEXT_PATH / 'footer.png')
+footer = get_footer_w(FOOTER) 
 info_text_color = (66, 66, 66)
 
 SHUX_LIST_DRAW = {

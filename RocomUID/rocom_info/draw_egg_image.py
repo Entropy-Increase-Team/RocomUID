@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 from gsuid_core.utils.image.convert import convert_img
 
 from ..utils.image import fairytale as ft
+from ..utils.image.image_tools import get_footer, FOOTER
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH
 
 # 孵蛋自带素材目录（放 texture2D/egg/ 子目录，与作者上游 rocom_info 素材隔离避免重名）
@@ -110,7 +111,7 @@ def _compose(condition: dict, results: list) -> Image.Image:
     tag_w = 176
     tag_h = int(tag_w * 152 / 176)
     tag_hide = int(tag_h * 0.46)            # 被黑板盖住的高度
-    _foot = _load_tex('footer.png')
+    _foot = get_footer(FOOTER)  
     footer = ft.tint(_foot, FOOTER_COLOR) if _foot else None
     foot_h = (footer.height + 24) if footer else 0
     board_bottom = TOP_H + panel_h
@@ -131,8 +132,7 @@ def _compose(condition: dict, results: list) -> Image.Image:
     # 黑板面板（panel_big 九宫格拉伸；最后贴，压住吊牌绳头）
     panel = _load_tex('panel_big.png')
     if panel is not None:
-        board = ft.nine_slice(panel, PANEL_INSET, PANEL_INSET, PANEL_INSET,
-                              PANEL_INSET, panel_w, panel_h)
+        board = ft.nine_slice(panel, PANEL_INSET, PANEL_INSET, PANEL_INSET, PANEL_INSET, panel_w, panel_h)
     else:
         board = ft.wobbly_card(panel_w, panel_h, fill=(54, 52, 58, 255),
                                outline=(150, 120, 70, 255), radius=30, border_w=10,
