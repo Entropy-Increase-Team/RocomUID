@@ -13,6 +13,7 @@ from ..utils.resource.RESOURCE_PATH import ROCOM_ICON_PATH, ROCOM_SKILL_PATH
 from ..utils.fonts.rocom_fonts import rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_64, rc_font_72, skill_font_22, skill_font_32
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
+LINSHI_ICON_PATH = ROCOM_SKILL_PATH / 'img_linshi.png'
 mask_bar = Image.open(TEXT_PATH / 'mask_bar.png')
 skill_bg = Image.open(TEXT_PATH / 'skill_bg.png')
 table_img = Image.open(TEXT_PATH / 'table.png')
@@ -149,7 +150,10 @@ async def _open_image(source, fallback, client=None):
             return image.copy()
         except Exception:
             pass
-    return Image.open(TEXT_PATH / 'img_linshi.png').convert('RGBA')
+    try:
+        return Image.open(LINSHI_ICON_PATH).convert('RGBA')
+    except Exception:
+        return Image.new('RGBA', (150, 150), (0, 0, 0, 0))
 
 async def _prefetch_remote_images(urls, client):
     async def fetch(url):

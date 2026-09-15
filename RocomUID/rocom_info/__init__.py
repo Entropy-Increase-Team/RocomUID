@@ -3,11 +3,10 @@ import re
 from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
-from ..utils.map.rocom_map import rocom_name_list, rocom_group_list, rocom_list, rocom_skill_list, characteristic_list, skill_list, rocom_egg_build
 from .draw_info_image import draw_rocom_info
 from .draw_egg_image import draw_egg_info
 from ..utils.error_reply import prefix as P
-from ..utils.convert import get_rocom_name, rocom_egg_conf,get_pet_info,pet_list
+from ..utils.convert import get_rocom_name, get_pet_info, pet_list, skill_list
 from ..rocom_config.rocom_config import RC_CONFIG
 from ..utils.rocom_api import wegame_api
 

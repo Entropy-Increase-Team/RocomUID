@@ -237,7 +237,7 @@ async def draw_user_info(ev, uid, userinfo, petinfo):
             rocom_draw = ImageDraw.Draw(rocom_img)
             rocom_draw.text(
                 (75, 183),
-                f'{name_id_list[str(rocom_item.PetBaseId)]}',
+                f'{name_id_list.get(str(rocom_item.PetBaseId), f"未知精灵({rocom_item.PetBaseId})")}',
                 (255, 255, 255),
                 skill_font_24,
                 'mm',

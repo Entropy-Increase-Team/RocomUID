@@ -1,18 +1,13 @@
 from pathlib import Path
-import json
 from typing import Dict, Union
 
 import msgspec
 from msgspec import json as msgjson
 
 from .rocom_api import wegame_api
-from .convert import get_pet_info, get_plant_info, get_skill_info
+from .convert import get_pet_info, get_pet_name, get_plant_info, get_skill_info
 from gsuid_core.logger import logger
 from .models import HomeInfo, PetInfoMap, PetPanelInfo
-
-PET_NAME_MAP_PATH = Path(__file__).parent / "map" / "pet_name_map.json"
-_pet_name_map: Dict[str, Dict[str, object]] = {}
-_pet_name_map_loaded = False
 
 
 def convert_home_info(data: Dict) -> HomeInfo:
@@ -31,19 +26,7 @@ def get_home_name_from_homeinfo(homeinfo: Dict) -> str:
 
 
 def get_pet_name_from_map(pet_id: Union[int, str]) -> Union[str, None]:
-    global _pet_name_map_loaded, _pet_name_map
-
-    if not _pet_name_map_loaded:
-        try:
-            with Path.open(PET_NAME_MAP_PATH, encoding='utf-8') as f:
-                _pet_name_map = json.load(f)
-        except Exception:
-            _pet_name_map = {}
-        _pet_name_map_loaded = True
-
-    pet_info = _pet_name_map.get(str(pet_id), {})
-    pet_name = pet_info.get('name') if isinstance(pet_info, dict) else None
-    return pet_name if isinstance(pet_name, str) and pet_name else None
+    return get_pet_name(pet_id)
 
 
 def _calc_range_percent(value, low, high):

@@ -8,9 +8,8 @@ from PIL import Image, ImageDraw, ImageChops
 from ..utils.image.image_tools import get_text_line, get_footer_w, FOOTER
 from gsuid_core.utils.image.convert import convert_img
 from ..utils.resource.RESOURCE_PATH import ROCOM_HEAD_PATH, ROCOM_ICON_PATH, ROCOM_SKILL_PATH
-from ..utils.map.rocom_map import skill_list
 from ..utils.fonts.rocom_fonts import rocom_font_origin, rc_font_14, rc_font_16, rc_font_18, rc_font_20, rc_font_22, rc_font_24, rc_font_28, rc_font_30, rc_font_32, rc_font_34, rc_font_40, rc_font_44, rc_font_64, rc_font_72, skill_font_16, skill_font_18, skill_font_20, skill_font_22, skill_font_24, skill_font_32, skill_font_42
-from ..utils.convert import get_pet_info, get_skill_info, pet_list, nature_map
+from ..utils.convert import get_pet_info, get_skill_info, nature_map
 from ..utils.error_reply import prefix
 
 TEXT_PATH = Path(__file__).parent / 'texture2D'
@@ -366,13 +365,6 @@ async def draw_pet_info(uid, pet_data):
                 skill_font_42,
                 'lm',
             )
-            # jineng_draw.text(
-                # (350, 150),
-                # f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
-                # (255, 255, 255),
-                # skill_font_42,
-                # 'lm',
-            # )
             img.paste(
                 jineng_temp, (516 * jn_x + 82, jn_y * 220 + start_height), jineng_temp
             )
@@ -424,13 +416,6 @@ async def draw_pet_info(uid, pet_data):
                 skill_font_22,
                 'lm',
             )
-            # jineng_draw.text(
-                # (150, 65),
-                # f'{skill_list[jineng][2] if skill_list[jineng][2] != "0" else "—"}',
-                # (255, 255, 255),
-                # skill_font_22,
-                # 'lm',
-            # )
             img.paste(
                 jineng_temp, (208 * jn_x + 82, jn_y * 99 + start_height), jineng_temp
             )
