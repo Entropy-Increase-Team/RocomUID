@@ -206,6 +206,32 @@ def _get_current_round_info() -> tuple[str, str]:
     return date_str, time_range
 
 
+def _extract_price(item: dict) -> str:
+    """取商品单价文本"""
+    raw = item.get('price')
+    if raw is None or raw == '':
+        raw = item.get('cost')
+
+    if isinstance(raw, dict):
+        for key in ('real', 'origin'):
+            node = raw.get(key)
+            amount = node.get('amount') if isinstance(node, dict) else node
+            if amount is None or amount == '':
+                continue
+            try:
+                return str(int(amount))
+            except (TypeError, ValueError):
+                continue
+        return '0'
+
+    if raw is None or raw == '':
+        return '0'
+    try:
+        return str(int(raw))
+    except (TypeError, ValueError):
+        return str(raw)
+
+
 def _is_hot_item(item: dict) -> bool:
     if 'isHot' in item:
         return bool(item.get('isHot'))
@@ -258,7 +284,7 @@ async def _draw_goods_card(img: Image.Image, item: dict, index: int, top: int) -
     # 价格区域：金币 + 数字 + /个
     coin = coin_icon.resize((91, 90), Image.Resampling.LANCZOS)
     _paste_with_outline(card, coin, (171, 141), outline=8, offset=(0, 0))
-    price = str(item.get('price') or item.get('cost') or 0)
+    price = _extract_price(item)
 
     price_x = 260
     price_y = 135
@@ -440,6 +466,156 @@ async def _draw_merchant_info_classic(merchant_info):
     img.paste(classic_footer, (277, img_height - 95), classic_footer)
     res = await convert_img(img)
     return res
+
+
+TODAY_GOOD_NAMES = ('炫彩精灵蛋', '棱镜球', '国王球', '祝福项坠')
+TODAY_COLUMNS = 6
+TODAY_CELL_W = 170
+TODAY_CELL_H = 214
+TODAY_ROW_GAP = 26
+TODAY_HEADER_H = 58
+TODAY_ROUND_GAP = 28
+TODAY_RED = (196, 62, 54, 255)
+TODAY_ORANGE = (214, 122, 42, 255)
+
+
+def _today_round_period(round_index: int) -> str:
+    for win in ROUND_WINDOWS:
+        if win['id'] == round_index:
+            return win['label']
+    return '时间未知'
+
+
+def _today_round_time_label(round_data: dict, round_index: int) -> str:
+    products = round_data.get('products') or []
+    first = products[0] if products and isinstance(products[0], dict) else {}
+    starttime = str(first.get('starttime') or '')
+    endtime = str(first.get('endtime') or '')
+    if starttime and endtime:
+        start_hm = starttime[-5:] if len(starttime) >= 5 else starttime
+        return f'{start_hm}-{endtime}'
+    return _today_round_period(round_index)
+
+
+def _today_cell_font(text: str) -> ImageFont.FreeTypeFont:
+    size = 40
+    while size >= 20:
+        font = product_font(size)
+        bbox = ImageDraw.Draw(Image.new('RGBA', (1, 1))).textbbox((0, 0), text, font=font)
+        if bbox[2] - bbox[0] <= TODAY_CELL_W - 16:
+            return font
+        size -= 3
+    return product_font(20)
+
+
+async def _draw_today_goods_cell(
+    base: Image.Image,
+    product: dict,
+    x: int,
+    y: int,
+) -> None:
+    cell = Image.new('RGBA', (TODAY_CELL_W, TODAY_CELL_H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(cell)
+    draw.rounded_rectangle(
+        (0, 0, TODAY_CELL_W, TODAY_CELL_H), radius=14, fill=CARD_BG
+    )
+
+    name = str(product.get('name') or '未知商品')
+    is_good = any(good in name for good in TODAY_GOOD_NAMES)
+
+    icon_url = product.get('image') or product.get('iconUrl')
+    if icon_url:
+        try:
+            icon = await get_pic(icon_url)
+            icon = icon.convert('RGBA')
+            icon.thumbnail((120, 120), Image.Resampling.LANCZOS)
+            icon_x = (TODAY_CELL_W - icon.width) // 2
+            icon_y = 20 + (120 - icon.height) // 2
+            _paste_with_outline(cell, icon, (icon_x, icon_y), outline=9)
+        except Exception:
+            pass
+
+    name_font = _today_cell_font(name)
+    name_color = TODAY_RED if is_good else DARK
+    bbox = draw.textbbox((0, 0), name, font=name_font)
+    name_x = TODAY_CELL_W / 2 - (bbox[2] - bbox[0]) / 2 - bbox[0]
+    name_y = 156 - bbox[1]
+    draw.text((name_x + 2, name_y + 3), name, font=name_font, fill=CREAM, stroke_width=8, stroke_fill=CREAM)
+    draw.text((name_x, name_y), name, font=name_font, fill=name_color)
+
+    if is_good:
+        hot = hot_badge.resize((46, 46), Image.Resampling.LANCZOS)
+        cell.paste(hot, (TODAY_CELL_W - 52, 4), hot)
+
+    base.paste(cell, (x, y), cell)
+
+
+async def draw_today_merchant_info(rounds: dict):
+    """渲染「今日远行商人」：四轮商品汇总成一张图。"""
+    round_count = len(ROUND_WINDOWS)
+    content_top = 592
+    blocks = []
+
+    for round_index in range(1, round_count + 1):
+        round_data = rounds.get(str(round_index)) or {}
+        products = [
+            item
+            for item in (round_data.get('products') or [])
+            if isinstance(item, dict)
+        ]
+        rows = max(1, math.ceil(len(products) / TODAY_COLUMNS)) if products else 1
+        height = TODAY_HEADER_H + 16 + rows * TODAY_CELL_H + (rows - 1) * 12
+        blocks.append((round_index, products, rows, height))
+
+    total_height = sum(block[3] + TODAY_ROUND_GAP for block in blocks)
+    bottom_frame_top = content_top + total_height
+    img_height = bottom_frame_top + 160
+
+    img = Image.new('RGBA', (PAGE_WIDTH, img_height), PAGE_BG)
+    draw = ImageDraw.Draw(img)
+
+    img.paste(title, (20, 21), title)
+    now = datetime.now(pytz.timezone('Asia/Shanghai'))
+    date_str = f'{now.month}.{now.day}'
+    draw.text((342, 446), date_str, font=font_date, fill=(129, 120, 115, 255), stroke_width=10, stroke_fill=DARK)
+    draw.text((468, 432), '今日四轮汇总', font=font_time, fill=(240, 201, 70, 255), stroke_width=10, stroke_fill=DARK)
+
+    cursor_y = content_top
+    for round_index, products, rows, height in blocks:
+        draw.rounded_rectangle((20, cursor_y, 1063, cursor_y + height), radius=15, fill=(218, 212, 199, 255))
+
+        time_label = _today_round_time_label(
+            rounds.get(str(round_index)) or {}, round_index
+        )
+        draw.text((44, cursor_y + 14), f'第{round_index}轮', font=font_limit, fill=DARK)
+        time_bbox = draw.textbbox((0, 0), time_label, font=font_limit)
+        draw.text(
+            (1019 - (time_bbox[2] - time_bbox[0]), cursor_y + 14),
+            time_label,
+            font=font_limit,
+            fill=(94, 90, 84, 255),
+        )
+
+        if products:
+            for index, product in enumerate(products):
+                row = index // TODAY_COLUMNS
+                col = index % TODAY_COLUMNS
+                cell_x = 36 + col * (TODAY_CELL_W + 12)
+                cell_y = cursor_y + TODAY_HEADER_H + 16 + row * (TODAY_CELL_H + 12)
+                await _draw_today_goods_cell(img, product, cell_x, cell_y)
+        else:
+            _draw_centered_text(
+                draw,
+                (541, cursor_y + TODAY_HEADER_H + 16 + TODAY_CELL_H // 2),
+                '待更新',
+                font_empty,
+                GRAY,
+            )
+
+        cursor_y += height + TODAY_ROUND_GAP
+
+    img.paste(footer_frame, (0, bottom_frame_top), footer_frame)
+    return await convert_img(img)
 
 
 def _normalize_merchant_render_style(style: str) -> str:

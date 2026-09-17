@@ -16,6 +16,10 @@ app_info_list = {
     "wxmini": ["wx9a5bc2cdcaff1af1", 1, 0]
 }
 
+# 远行商人
+MERCHANT_ROUND_HOURS = (8, 12, 16, 20)
+
+
 class TEXTAPI():
     base_url = "text_url"
     def __init__(self, wegame_api_key: str = "", timeout: float = 15.0):
@@ -201,6 +205,7 @@ class WegameApi():
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
         self.last_error_message: str = ""
+        self._item_icon_cache: Dict[int, str] = {}
     
     def _clear_last_error(self) -> None:
         self.last_error_message = ""
@@ -248,6 +253,7 @@ class WegameApi():
         headers: Dict[str, str],
         params: Optional[Dict] = None,
         json_data: Optional[Dict] = None,
+        full: bool = False,
     ) -> Optional[Dict]:
         try:
             self._clear_last_error()
@@ -312,6 +318,8 @@ class WegameApi():
                 logger.warning(f"[Rocom API] {path} 错误: {err_message}")
                 self._set_last_error(str(err_message))
                 return None
+            if full:
+                return data
             return data.get("data", {})
         except httpx.TimeoutException:
             logger.error(f"[Rocom API] {method} {path} {params} 请求超时")
@@ -684,7 +692,217 @@ class WegameApi():
         
         #print(f'{shopid}:{data}')
         return data
-    
+
+    async def get_item_icon(self, item_id: Any) -> Optional[str]:
+        """按物品 ID 查询 Wiki 物品图标 URL"""
+        try:
+            item_id_int = int(item_id)
+        except (TypeError, ValueError):
+            return None
+        if item_id_int <= 0:
+            return None
+
+        cached = self._item_icon_cache.get(item_id_int)
+        if cached:
+            return cached
+
+        for item_kind in ('bag', 'visual'):
+            data = await self._request(
+                'GET',
+                f'/api/v1/games/rocom/wiki/items/{item_kind}/{item_id_int}',
+                self._wegame_headers(),
+            )
+            if not isinstance(data, dict):
+                continue
+            icon = data.get('icon') or data.get('big_icon')
+            if icon:
+                self._item_icon_cache[item_id_int] = str(icon)
+                return str(icon)
+
+        logger.warning(f'[Rocom API] 物品图标查询失败: item_id={item_id_int}')
+        return None
+
+    def _build_merchant_round_time(
+        self,
+        goods: list,
+        now: float,
+    ) -> tuple[str, str, float]:
+        """按当前轮次与 next_refresh_time 组装展示用的开始 / 结束时间。"""
+        local_now = time.localtime(now)
+        round_hour = MERCHANT_ROUND_HOURS[0]
+        for hour in MERCHANT_ROUND_HOURS:
+            if local_now.tm_hour >= hour:
+                round_hour = hour
+
+        # 0 点 - 8 点仍属于上一日第 4 轮（远行商人此时不刷新）
+        day_offset = 0
+        if local_now.tm_hour < MERCHANT_ROUND_HOURS[0]:
+            round_hour = MERCHANT_ROUND_HOURS[-1]
+            day_offset = -1
+
+        start_ts = time.mktime(
+            (
+                local_now.tm_year,
+                local_now.tm_mon,
+                local_now.tm_mday + day_offset,
+                round_hour,
+                0,
+                0,
+                local_now.tm_wday,
+                local_now.tm_yday,
+                local_now.tm_isdst,
+            )
+        )
+        starttime = time.strftime('%m月%d日 %H:%M', time.localtime(start_ts))
+
+        endtime = ''
+        for item in goods:
+            if not isinstance(item, dict):
+                continue
+            try:
+                next_refresh_time = int(item.get('next_refresh_time') or 0)
+            except (TypeError, ValueError):
+                continue
+            if next_refresh_time > now:
+                endtime = time.strftime('%H:%M', time.localtime(next_refresh_time))
+                break
+
+        if not endtime:
+            endtime = time.strftime('%H:%M', time.localtime(start_ts + 4 * 3600))
+        return starttime, endtime, start_ts
+
+    @staticmethod
+    def _parse_ingame_price(price: Any) -> int:
+        """解析 Ingame 价格结构"""
+        if isinstance(price, dict):
+            for key in ('real', 'origin'):
+                node = price.get(key)
+                if isinstance(node, dict):
+                    amount = node.get('amount')
+                else:
+                    amount = node
+                if amount is None or amount == '':
+                    continue
+                try:
+                    return int(amount)
+                except (TypeError, ValueError):
+                    continue
+            return 0
+
+        try:
+            return int(price)
+        except (TypeError, ValueError):
+            return 0
+
+    async def _build_ingame_merchant_products(self, raw: Dict[str, Any]) -> list:
+        """把 Ingame 商店响应整理成与旧接口一致的 products 列表。"""
+        data = raw.get('data') or {}
+        if not isinstance(data, dict):
+            return []
+
+        goods = data.get('goods')
+        if not isinstance(goods, list) or not goods:
+            logger.warning('[Rocom API] Ingame 远行商人接口未返回商品数据')
+            return []
+
+        mapping = raw.get('goods_mapping')
+        if not isinstance(mapping, list):
+            mapping = data.get('goods_mapping') or []
+
+        name_by_goods_id: Dict[str, str] = {}
+        item_id_by_goods_id: Dict[str, Any] = {}
+        for item in mapping:
+            if not isinstance(item, dict):
+                continue
+            goods_id = item.get('goods_id')
+            if goods_id is None:
+                continue
+            name_by_goods_id[str(goods_id)] = str(item.get('goods_name') or '')
+            item_id_by_goods_id[str(goods_id)] = item.get('item_id')
+
+        starttime, endtime, start_ts = self._build_merchant_round_time(
+            goods, time.time()
+        )
+
+        # 服务端可能命中缓存：刷新时间早于本轮开始时说明是上一轮的数据
+        refresh_times = []
+        for item in goods:
+            if not isinstance(item, dict):
+                continue
+            try:
+                next_refresh_time = int(item.get('next_refresh_time') or 0)
+            except (TypeError, ValueError):
+                continue
+            if next_refresh_time > 0:
+                refresh_times.append(next_refresh_time)
+        if refresh_times and min(refresh_times) <= start_ts:
+            logger.warning(
+                '[Rocom API] Ingame 远行商人接口返回上一轮缓存数据, 视为拉取失败'
+            )
+            return []
+
+        products = []
+        for item in goods:
+            if not isinstance(item, dict):
+                continue
+            goods_key = str(item.get('goods_id'))
+            name = name_by_goods_id.get(goods_key) or ''
+            item_id = item_id_by_goods_id.get(goods_key)
+            if not name:
+                name = '未知商品'
+
+            image = await self.get_item_icon(item_id)
+            if not image:
+                logger.warning(
+                    f'[Rocom API] Ingame 远行商人商品图标缺失, 视为拉取失败: '
+                    f'goods_id={goods_key}, name={name}'
+                )
+                return []
+
+            price = self._parse_ingame_price(item.get('price'))
+            try:
+                buy_limit_num = int(item.get('limit_buy_num') or 0)
+            except (TypeError, ValueError):
+                buy_limit_num = 0
+
+            products.append(
+                {
+                    'name': name,
+                    'goods_name': name,
+                    'image': image,
+                    'iconUrl': image,
+                    'starttime': starttime,
+                    'endtime': endtime,
+                    'price': price,
+                    'buy_limit_num': buy_limit_num,
+                    'isHot': False,
+                    'isEnded': False,
+                }
+            )
+
+        return products
+
+    async def get_ingame_merchant_info(
+        self,
+        shop_id: Optional[int] = None,
+        wait_ms: int = 5000,
+    ) -> list:
+        """远行商人商店信息Ingame"""
+        payload: Dict[str, Any] = {'wait_ms': int(wait_ms)}
+        if shop_id:
+            payload['shop_id'] = int(shop_id)
+
+        raw = await self._request(
+            'POST',
+            '/api/v1/games/rocom/ingame/merchant/info',
+            self._wegame_headers(),
+            json_data=payload,
+            full=True,
+        )
+        if not isinstance(raw, dict):
+            return []
+        return await self._build_ingame_merchant_products(raw)
+
     async def get_merchant_info(self, refresh: bool = False):
         """
         获取游戏信息接口
