@@ -62,10 +62,10 @@ LIMIT_BG = (135, 128, 112, 255)
 LIMIT_TEXT = (253, 247, 233, 255)
 
 ROUND_WINDOWS = [
-    {'id': 1, 'label': '08:00-12:00', 'start': 8, 'end': 12},
-    {'id': 2, 'label': '12:00-16:00', 'start': 12, 'end': 16},
-    {'id': 3, 'label': '16:00-20:00', 'start': 16, 'end': 20},
-    {'id': 4, 'label': '20:00-24:00', 'start': 20, 'end': 24},
+    {'id': 1, 'label': '08:00-11:59', 'start': 8, 'end': 12},
+    {'id': 2, 'label': '12:00-15:59', 'start': 12, 'end': 16},
+    {'id': 3, 'label': '16:00-19:59', 'start': 16, 'end': 20},
+    {'id': 4, 'label': '20:00-23:59', 'start': 20, 'end': 24},
 ]
 
 CLASSIC_ROUND_WINDOWS = [
@@ -270,9 +270,9 @@ async def _draw_goods_card(img: Image.Image, item: dict, index: int, top: int) -
         try:
             prop_icon = await get_pic(icon_url)
             prop_icon = prop_icon.convert('RGBA')
-            prop_icon.thumbnail((296, 246), Image.Resampling.LANCZOS)
-            icon_x = 725 + (296 - prop_icon.width) // 2
-            icon_y = 31 + (246 - prop_icon.height) // 2
+            prop_icon = prop_icon.resize((260, 260), Image.Resampling.LANCZOS)
+            icon_x = 725 + (260 - prop_icon.width) // 2
+            icon_y = 31 + (260 - prop_icon.height) // 2
             _paste_with_outline(card, prop_icon, (icon_x, icon_y), outline=11)
         except Exception:
             pass
@@ -487,13 +487,6 @@ def _today_round_period(round_index: int) -> str:
 
 
 def _today_round_time_label(round_data: dict, round_index: int) -> str:
-    products = round_data.get('products') or []
-    first = products[0] if products and isinstance(products[0], dict) else {}
-    starttime = str(first.get('starttime') or '')
-    endtime = str(first.get('endtime') or '')
-    if starttime and endtime:
-        start_hm = starttime[-5:] if len(starttime) >= 5 else starttime
-        return f'{start_hm}-{endtime}'
     return _today_round_period(round_index)
 
 
