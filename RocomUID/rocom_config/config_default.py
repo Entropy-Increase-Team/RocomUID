@@ -34,6 +34,17 @@ CONFIG_DEFAULT: Dict[str, GSC] = {
             "90",
         ],
     ),
+    "RC_merchant_fallback_delay": GsStrConfig(
+        "远行商人兜底数据延迟推送（s）",
+        "接口拉取失败、仅兜底接口取到数据时，等待该时间后重新拉取，避免前几分钟直接使用兜底接口数据导致商品缺失",
+        "60",
+        options=[
+            "30",
+            "60",
+            "90",
+            "120",
+        ],
+    ),
     "RC_merchant_render_style": GsStrConfig(
         "远行商人渲染样式",
         "用于选择远行商人图片渲染样式",

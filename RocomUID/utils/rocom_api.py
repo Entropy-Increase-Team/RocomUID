@@ -205,6 +205,7 @@ class WegameApi():
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
         self.last_error_message: str = ""
+        self.last_merchant_source: str = ""
         self._item_icon_cache: Dict[int, str] = {}
     
     def _clear_last_error(self) -> None:
@@ -726,25 +727,19 @@ class WegameApi():
         self,
         goods: list,
         now: float,
-    ) -> tuple[str, str, float]:
-        """按当前轮次与 next_refresh_time 组装展示用的开始 / 结束时间。"""
+    ) -> tuple[str, str]:
+        """组装展示用的本轮开始 / 结束时间。"""
         local_now = time.localtime(now)
         round_hour = MERCHANT_ROUND_HOURS[0]
         for hour in MERCHANT_ROUND_HOURS:
             if local_now.tm_hour >= hour:
                 round_hour = hour
 
-        # 0 点 - 8 点仍属于上一日第 4 轮（远行商人此时不刷新）
-        day_offset = 0
-        if local_now.tm_hour < MERCHANT_ROUND_HOURS[0]:
-            round_hour = MERCHANT_ROUND_HOURS[-1]
-            day_offset = -1
-
         start_ts = time.mktime(
             (
                 local_now.tm_year,
                 local_now.tm_mon,
-                local_now.tm_mday + day_offset,
+                local_now.tm_mday,
                 round_hour,
                 0,
                 0,
@@ -769,7 +764,7 @@ class WegameApi():
 
         if not endtime:
             endtime = time.strftime('%H:%M', time.localtime(start_ts + 4 * 3600))
-        return starttime, endtime, start_ts
+        return starttime, endtime
 
     @staticmethod
     def _parse_ingame_price(price: Any) -> int:
@@ -820,11 +815,10 @@ class WegameApi():
             name_by_goods_id[str(goods_id)] = str(item.get('goods_name') or '')
             item_id_by_goods_id[str(goods_id)] = item.get('item_id')
 
-        starttime, endtime, start_ts = self._build_merchant_round_time(
-            goods, time.time()
-        )
+        now = time.time()
+        starttime, endtime = self._build_merchant_round_time(goods, now)
 
-        # 服务端可能命中缓存：刷新时间早于本轮开始时说明是上一轮的数据
+        # 当前时间已经越过返回的刷新时间戳，这份数据不是本轮
         refresh_times = []
         for item in goods:
             if not isinstance(item, dict):
@@ -835,9 +829,10 @@ class WegameApi():
                 continue
             if next_refresh_time > 0:
                 refresh_times.append(next_refresh_time)
-        if refresh_times and min(refresh_times) <= start_ts:
+        if refresh_times and min(refresh_times) <= now:
             logger.warning(
-                '[Rocom API] Ingame 远行商人接口返回上一轮缓存数据, 视为拉取失败'
+                f'[Rocom API] Ingame 远行商人接口返回旧一轮数据 '
+                f'now={int(now)}, min(next_refresh_time)={min(refresh_times)}'
             )
             return []
 

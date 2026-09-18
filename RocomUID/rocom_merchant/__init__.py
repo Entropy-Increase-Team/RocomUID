@@ -23,6 +23,7 @@ sv_merchant = SV('rc远行商人事件', priority=5)
 _MERCHANT_ROUND_HOURS = [8, 12, 16, 20]
 _MERCHANT_DATA_PATH = MAIN_PATH / 'merchant'
 _MERCHANT_TODAY_CACHE_PATH = _MERCHANT_DATA_PATH / 'merchant_today_cache.json'
+_MERCHANT_FALLBACK_PUSH_DELAY_SECONDS = 60
 # 今日四轮商品的内存缓存
 _MERCHANT_TODAY_MEMORY_CACHE: Dict[str, Any] = {
     'date': '',
@@ -70,11 +71,12 @@ def _is_valid_merchant_info(merchant_info: Any) -> bool:
 
 
 async def _fetch_merchant_info(refresh: bool = False) -> list[Dict[str, Any]]:
-    """拉取远行商人数据"""
+    """拉取远行商人数据：优先 Ingame 接口，拉取失败降级旧接口。"""
     merchant_info = await wegame_api.get_ingame_merchant_info(
         wait_ms=8000 if refresh else 5000
     )
     if _is_valid_merchant_info(merchant_info):
+        wegame_api.last_merchant_source = 'ingame'
         return merchant_info
 
     logger.warning(
@@ -84,12 +86,14 @@ async def _fetch_merchant_info(refresh: bool = False) -> list[Dict[str, Any]]:
 
     legacy_info = await wegame_api.get_merchant_info(refresh=refresh)
     if _is_valid_merchant_info(legacy_info):
+        wegame_api.last_merchant_source = 'legacy'
         return legacy_info
 
     logger.warning(
         f'[洛克王国服务] 远行商人旧接口同样拉取失败: '
         f'{wegame_api.last_error_message or "无有效商品数据"}'
     )
+    wegame_api.last_merchant_source = ''
     return []
 
 
@@ -273,15 +277,29 @@ async def refresh_merchant_info():
 
     merchant_retry_count = max(_get_config_int("RC_merchant_retry_count", 20), 1)
     merchant_cd = _get_config_int("RC_merchant_cd", 30)
+    fallback_delay = _get_config_int(
+        "RC_merchant_fallback_delay", _MERCHANT_FALLBACK_PUSH_DELAY_SECONDS
+    )
     merchant_info = []
 
     for jishu in range(1, merchant_retry_count + 1):
         logger.info(f"[洛克王国服务] 远行商人正在进行第{jishu}次数据获取")
-        merchant_info = await _fetch_merchant_info(refresh=True)
-        if _is_valid_merchant_info(merchant_info):
-            break
+        fetched_info = await _fetch_merchant_info(refresh=True)
+        if _is_valid_merchant_info(fetched_info):
+            if wegame_api.last_merchant_source == 'ingame':
+                merchant_info = fetched_info
+                break
 
-        merchant_info = []
+            logger.warning(
+                f'[洛克王国服务] Ingame 远行商人接口拉取失败'
+                f'等待 {fallback_delay} 秒后重新拉取本轮数据'
+            )
+            await asyncio.sleep(fallback_delay)
+            fetched_info = await _fetch_merchant_info(refresh=True)
+            if _is_valid_merchant_info(fetched_info):
+                merchant_info = fetched_info
+                break
+
         if jishu < merchant_retry_count:
             await asyncio.sleep(merchant_cd)
 
