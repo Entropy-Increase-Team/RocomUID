@@ -91,7 +91,8 @@ def _head_img(pet) -> Image.Image:
 
 
 def _feed_text(pet, now):
-    return feed_status_text(pet.status)
+    text = feed_status_text(pet.status, pet.pet_rip_time, now)
+    return text.removeprefix('喂养中 ')
 
 
 def _egg_state(pet, now):
