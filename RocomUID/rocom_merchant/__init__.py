@@ -1,3 +1,4 @@
+import re
 import json
 import time
 import asyncio
@@ -7,11 +8,13 @@ from gsuid_core.sv import SV
 from gsuid_core.bot import Bot
 from gsuid_core.models import Event
 from gsuid_core.logger import logger
+from gsuid_core.segment import MessageSegment
 from datetime import datetime
 from ..utils.rocom_api import wegame_api
-from gsuid_core.subscribe import gs_subscribe
+from gsuid_core.subscribe import Subscribe, gs_subscribe
 from gsuid_core.aps import scheduler
 from ..utils.error_reply import prefix as P
+from ..utils.convert import merchant_goods_names
 from ..rocom_config.rocom_config import RC_CONFIG
 from .draw_info_image import draw_merchant_info, draw_today_merchant_info
 from ..utils.resource.RESOURCE_PATH import MAIN_PATH
@@ -24,6 +27,8 @@ _MERCHANT_ROUND_HOURS = [8, 12, 16, 20]
 _MERCHANT_DATA_PATH = MAIN_PATH / 'merchant'
 _MERCHANT_TODAY_CACHE_PATH = _MERCHANT_DATA_PATH / 'merchant_today_cache.json'
 _MERCHANT_FALLBACK_PUSH_DELAY_SECONDS = 60
+_MERCHANT_TASK_NAME = '[洛克王国] 远行商人'
+_MERCHANT_AT_ALL_KEY = 'rocom_merchant_at_all'
 # 今日四轮商品的内存缓存
 _MERCHANT_TODAY_MEMORY_CACHE: Dict[str, Any] = {
     'date': '',
@@ -310,9 +315,19 @@ async def refresh_merchant_info():
     _record_merchant_info(merchant_info)
 
     im = await draw_merchant_info(merchant_info)
-    datas = await gs_subscribe.get_subscribe('[洛克王国] 远行商人')
+    datas = await gs_subscribe.get_subscribe(_MERCHANT_TASK_NAME)
     for data in datas:
-        await data.send(im)
+        names = _load_merchant_filter(data)
+        if not _merchant_round_matches(names, merchant_info):
+            logger.info(
+                f'[洛克王国服务] 本轮远行商人没有该目标设置的商品，不推送: '
+                f'subscribe_id={data.id}, uid={data.uid}, 设置={names}'
+            )
+            continue
+        if data.user_type == 'group' and _is_merchant_at_all(data):
+            await data.send([MessageSegment.at('all'), im])
+        else:
+            await data.send(im)
 
 
 # 每轮刷新后半小时补拉一次，避免整点首拉时接口未刷新导致当天缺轮
@@ -335,3 +350,196 @@ try:
     _get_today_merchant_cache()
 except Exception as e:
     logger.warning(f'[洛克王国服务] 今日远行商人缓存预热失败: {e!r}')
+
+
+# 商人推送筛选
+_MERCHANT_SELECTED_SPLIT_RE = re.compile(r'[\s,，、;；/／|｜+＋]+')
+
+
+def _is_subsequence(needle: str, haystack: str) -> bool:
+    it = iter(haystack)
+    return all(char in it for char in needle)
+
+
+def _merchant_name_matches(name: str, good: str) -> bool:
+    """用户设置的词能不能算命中某个商品名。"""
+    if not name or not good:
+        return False
+    if name in good or good in name:
+        return True
+    return _is_subsequence(name, good)
+
+
+def _merchant_filter_scope_id(source) -> str:
+    return str(
+        getattr(source, 'group_id', None)
+        or getattr(source, 'user_id', None)
+        or ''
+    )
+
+
+def _load_merchant_filter(data: Subscribe) -> list[str]:
+    """从订阅行读商人推送筛选。"""
+    raw = getattr(data, 'extra_message', None)
+    if not raw:
+        return []
+    try:
+        names = json.loads(raw)
+    except (TypeError, ValueError):
+        return []
+    if not isinstance(names, list):
+        return []
+    return [name for name in (str(n).strip() for n in names) if name]
+
+
+def _dump_merchant_filter(names: list[str]) -> str:
+    return json.dumps([str(name) for name in names], ensure_ascii=False)
+
+
+async def _save_merchant_filter(uid: str, names: list[str]) -> bool:
+    rows = await gs_subscribe.get_subscribe(_MERCHANT_TASK_NAME, uid=uid)
+    if not rows:
+        return False
+    payload = _dump_merchant_filter(names)
+    for row in rows:
+        await Subscribe.update_data_by_data({'id': row.id}, {'extra_message': payload})
+    return True
+
+
+async def _load_merchant_filter_for_uid(uid: str) -> list[str] | None:
+    rows = await gs_subscribe.get_subscribe(_MERCHANT_TASK_NAME, uid=uid)
+    if not rows:
+        return None
+    return _load_merchant_filter(rows[0])
+
+
+def _merchant_round_matches(names: list, merchant_info: list) -> bool:
+    """这一轮里有没有用户设置的推送商品"""
+    if not names:
+        return True
+    for product in merchant_info:
+        pname = str(product.get('name') or '') if isinstance(product, dict) else str(product)
+        if any(_merchant_name_matches(str(name), pname) for name in names):
+            return True
+    return False
+
+
+def _match_merchant_goods(names: list[str]) -> tuple[list[str], list[int]]:
+    """把用户设置的内容匹配到商品名单里的商品名。"""
+    all_indexes = list(range(1, len(names) + 1))
+    if not merchant_goods_names:
+        return [], all_indexes
+
+    matched: list[str] = []
+    hit_indexes: set[int] = set()
+    for good in merchant_goods_names:
+        good_hit = False
+        for index, name in enumerate(names, 1):
+            if _merchant_name_matches(name, good):
+                hit_indexes.add(index)
+                good_hit = True
+        if good_hit:
+            matched.append(good)
+
+    unmatched_indexes = [index for index in all_indexes if index not in hit_indexes]
+    return matched, unmatched_indexes
+
+
+def _parse_merchant_selected_text(text: str) -> list[str]:
+    names: dict[str, None] = {}
+    for name in _MERCHANT_SELECTED_SPLIT_RE.split(text or ''):
+        name = name.strip()
+        if name:
+            names.setdefault(name, None)
+    return list(names)
+
+
+def _format_merchant_push_filter(names: list[str], prefix: str) -> str:
+    matched, unmatched_indexes = _match_merchant_goods(names)
+    unmatched_text = '、'.join(f'第{index}个' for index in unmatched_indexes)
+
+    if not matched:
+        return '\n'.join([
+            f'{prefix}未匹配到商品，可能不会推送：',
+            f'• {unmatched_text}',
+        ])
+
+    lines = [f'{prefix}匹配到{len(matched)}个商品：']
+    lines += [f'• {good}' for good in matched]
+    if unmatched_indexes:
+        lines.append(f'未匹配到：{unmatched_text}')
+
+    return '\n'.join(lines)
+
+
+@sv_merchant.on_command(('设置商人推送',))
+async def set_merchant_push_filter(bot: Bot, ev: Event):
+    names = _parse_merchant_selected_text(ev.text)
+    if not await _save_merchant_filter(_merchant_filter_scope_id(ev), names):
+        return await bot.send(
+            f"尚未开启远行商人推送，请先发送[{P}开启远行商人]，再设置推送筛选。",
+            at_sender=True,
+        )
+
+    if not names:
+        return await bot.send("已清空远行商人推送筛选，之后每一轮商品都会推送。", at_sender=True)
+
+    await bot.send(
+        _format_merchant_push_filter(names, '已设置远行商人推送筛选，')
+        + f"\n输入[{P}设置商人推送]可清空设置恢复全部推送",
+        at_sender=True,
+    )
+
+
+@sv_merchant.on_fullmatch(('查看商人推送',))
+async def get_merchant_push_filter(bot: Bot, ev: Event):
+    names = await _load_merchant_filter_for_uid(_merchant_filter_scope_id(ev))
+    if names is None:
+        return await bot.send(
+            f"尚未开启远行商人推送，请先发送[{P}开启远行商人]。",
+            at_sender=True,
+        )
+    if not names:
+        return await bot.send(
+            "当前未设置远行商人推送筛选，每一轮商品都会推送。\n"
+            f"可输入[{P}设置商人推送 商品名]推送包含指定商品的轮次",
+            at_sender=True,
+        )
+
+    await bot.send(
+        _format_merchant_push_filter(names, '当前远行商人推送筛选')
+        + f"\n输入[{P}设置商人推送]可清空设置恢复全部推送",
+        at_sender=True,
+    )
+
+
+def _load_merchant_extra(data) -> Dict[str, Any]:
+    raw = getattr(data, 'extra_data', None)
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+async def set_merchant_at_all(uid: str, enabled: bool) -> bool:
+    rows = await gs_subscribe.get_subscribe(_MERCHANT_TASK_NAME, uid=uid)
+    if not rows:
+        return False
+    for row in rows:
+        extra = _load_merchant_extra(row)
+        if enabled:
+            extra[_MERCHANT_AT_ALL_KEY] = True
+        else:
+            extra.pop(_MERCHANT_AT_ALL_KEY, None)
+        await Subscribe.update_data_by_data(
+            {'id': row.id},
+            {'extra_data': json.dumps(extra, ensure_ascii=False)},
+        )
+    return True
+
+
+def _is_merchant_at_all(data) -> bool:
+    return bool(_load_merchant_extra(data).get(_MERCHANT_AT_ALL_KEY))

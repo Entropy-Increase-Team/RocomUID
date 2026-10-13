@@ -41,8 +41,24 @@
       },
 	  {
         "name": "远行商人推送",
-        "desc": "[开启/关闭]远行商人",
-        "eg": "[开启/关闭]远行商人",
+        "desc": "[开启/关闭]远行商人；群聊可追加「艾特」让每轮推送@全体成员",
+        "eg": "[开启/关闭]远行商人[艾特]",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      },
+	  {
+        "name": "设置商人推送",
+        "desc": "只推送包含指定商品的远行商人轮次，多个商品用空格或符号分隔；不带商品则清空设置、恢复全部推送",
+        "eg": "设置商人推送 国王球",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      },
+	  {
+        "name": "查看商人推送",
+        "desc": "查看当前远行商人推送筛选的商品",
+        "eg": "查看商人推送",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false

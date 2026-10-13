@@ -31,6 +31,9 @@ rank_list = _load_json('rank_list.json', [])
 home_plant_list = _load_json('home_item_list.json', {})
 random_good_list = _load_json('RANDOM_GOODS_CONF.json', {}).get('RocoDataRows', [])
 
+# 远行商人可推送商品名单
+merchant_goods_names = _load_json('MERCHANT_GOODS_NAMES.json', [])
+
 # ------------------------------ id 映射表 ------------------------------
 # 系别 id(数据包编号) -> 系别名
 UNIT_TYPE_NAME = {
