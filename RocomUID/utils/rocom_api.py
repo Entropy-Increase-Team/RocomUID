@@ -612,6 +612,17 @@ class WegameApi():
         )
         return data
 
+    async def get_home_scene_info(self, uid: str, wait_ms: int = 20000):
+        """家园场景"""
+        params = {"uid": uid, "wait_ms": wait_ms}
+        data = await self._request(
+            "GET",
+            "/api/v1/games/rocom/ingame/home/scene-info",
+            self._wegame_headers(),
+            params=params,
+        )
+        return data
+
     async def search_egg(self, height: float, weight: float, page_no: int = 1, page_size: int = 100):
         """
         孵蛋反查接口：按身高(m)、体重(kg)查询可能精灵蛋。

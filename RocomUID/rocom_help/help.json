@@ -86,6 +86,14 @@
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
+      },
+	  {
+        "name": "生蛋了吗",
+        "desc": "进入家园场景，列出待收取的蛋",
+        "eg": "生蛋了吗[UID]",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
       }
     ]
   },

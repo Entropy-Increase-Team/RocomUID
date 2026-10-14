@@ -74,6 +74,10 @@
 <img src=".github\assets\homepet_detail.jpg"/> 
 </p></details>
 
+<details><summary>rc生蛋了吗 - 命令: rc生蛋了吗(需要wegame_api_key才可使用，机器人会进你家)</summary><p>
+<img src=".github\assets\egg.png"/> 
+</p></details>
+
 ## 丨部分功能使用说明
 + 关于游戏数据获取
 >

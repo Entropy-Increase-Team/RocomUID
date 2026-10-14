@@ -18,6 +18,7 @@ from ..utils.to_data import (
     convert_pet_info_map,
 )
 from ..rocom_petinfo.draw_info_image import draw_pet_home, draw_pet_home_brief
+from .egg import api_to_home_egg_text
 from .draw_info_image import draw_home_info
 from .draw_home_image import draw_home_image
 from .draw_garden_image import draw_garden_image
@@ -181,3 +182,13 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
             not is_config_enabled('RC_home_separate_garden'),
         )
     )
+
+
+@sv_home_info.on_command('生蛋了吗')
+async def get_my_home_egg_info(bot: Bot, ev: Event):
+    uid = await _resolve_uid(bot, ev)
+    if uid is None:
+        return
+    await bot.send(f'正在进入[UID]{uid}的家园查找待收取的蛋，请稍后')
+    result = await api_to_home_egg_text(uid)
+    return await bot.send(result, at_sender=True)

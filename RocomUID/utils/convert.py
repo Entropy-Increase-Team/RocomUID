@@ -390,3 +390,11 @@ def get_pet_name(petid):
     if item is None:
         return None
     return item.get('name') or None
+
+
+def get_nature_name(nature_id):
+    """性格 id -> 性格名，未知 id 返回空串。"""
+    info = nature_map.get(str(nature_id))
+    if isinstance(info, dict):
+        return str(info.get('name') or '')
+    return ''
