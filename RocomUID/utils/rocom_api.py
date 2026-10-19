@@ -207,6 +207,7 @@ class WegameApi():
         self.last_error_message: str = ""
         self.last_merchant_source: str = ""
         self._item_icon_cache: Dict[int, str] = {}
+        self._profile_asset_cache: Dict[tuple, tuple] = {}
     
     def _clear_last_error(self) -> None:
         self.last_error_message = ""
@@ -584,6 +585,65 @@ class WegameApi():
             self._rocom_headers(fw_token, user_id),
             params,
         )
+    
+    async def get_pet_collection_ranking(
+        self,
+        rank_type: str = 'glass',
+        limit: int = 10,
+        uid: str = '',
+        resolve_names: bool = True,
+    ) -> Optional[Dict]:
+        """炫彩/异色排行榜"""
+        if rank_type not in ('glass', 'shining'):
+            self._set_last_error(f'不支持的排行类型: {rank_type}')
+            return None
+
+        try:
+            limit_int = int(limit)
+        except (TypeError, ValueError):
+            limit_int = 10
+        params: Dict[str, Any] = {'limit': max(1, min(limit_int, 100))}
+        if uid:
+            params['uid'] = self._sanitize_uid(uid)
+        if resolve_names:
+            params['resolve_names'] = 'true'
+
+        return await self._request(
+            'GET',
+            f'/api/v1/games/rocom/ingame/player/card/pet-stats/rankings/{rank_type}',
+            self._wegame_headers(),
+            params=params,
+        )
+
+    async def get_profile_asset(
+        self,
+        asset_type: str,
+        asset_id: Any,
+        ttl: int = 21600,
+    ) -> Optional[Dict]:
+        """查询单个个人名片信息（avatar / card_skin / label）"""
+        try:
+            asset_id_str = str(int(asset_id))
+        except (TypeError, ValueError):
+            return None
+        if asset_id_str in ('', '0'):
+            return None
+
+        cache_key = (asset_type, asset_id_str)
+        now = time.time()
+        cached = self._profile_asset_cache.get(cache_key)
+        if cached and now - cached[0] < ttl:
+            return cached[1]
+
+        data = await self._request(
+            'GET',
+            f'/api/v1/games/rocom/wiki/profile-assets/{asset_type}/{asset_id_str}',
+            self._wegame_headers(),
+        )
+        if isinstance(data, dict):
+            self._profile_asset_cache[cache_key] = (now, data)
+            return data
+        return None
     
     async def get_home_info(self, uid: str):
         """

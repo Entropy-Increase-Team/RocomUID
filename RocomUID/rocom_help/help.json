@@ -113,6 +113,27 @@
       }
     ]
   },
+  "排行服务": {
+    "desc": "炫彩/异色精灵收集排行",
+    "data": [
+      {
+        "name": "炫彩排行",
+        "desc": "炫彩精灵收集数排行，默认展示前10名，底部显示自己绑定UID的排名",
+        "eg": "炫彩排行[前20]/[uid]",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      },
+      {
+        "name": "异色排行",
+        "desc": "异色精灵收集数排行，默认展示前10名，底部显示自己绑定UID的排名",
+        "eg": "异色排行[前20]/[uid]",
+        "need_ck": false,
+        "need_sk": true,
+        "need_admin": false
+      }
+    ]
+  },
   "图鉴服务": {
     "desc": "查询精灵信息",
     "data": [
