@@ -248,6 +248,8 @@ async def api_to_dict_pet_info(
             "weight": npc_pet.get("weight"),
             "weight_percent": _calc_range_percent(npc_pet.get("weight"), pet_base.get("weight_low"), pet_base.get("weight_high")),
             "real_speciality_ids": petinfo['home_pet_info'].get("real_speciality_ids"),
+            "break_enhance_enum": petinfo['display_info'].get('attribute_info', {}).get("break_enhance_enum")
+            or npc_pet.get('attribute_info', {}).get("break_enhance_enum"),  # 三维属性类型
         }
 
         pet_info["pets_list"][pet_gid] = msgspec.to_builtins(

@@ -595,6 +595,57 @@ def _get_speciality_name(pet_info, pet_base):
     names = [name for name in names if name and name != '无']
     return '、'.join(names[:2]) or '无'
 
+def _get_three_dimension_parts(pet_info):
+    attr_map = {
+        1: ('生命', 'pethp'),
+        2: ('物攻', 'petatk'),
+        3: ('魔攻', 'petspatk'),
+        4: ('物防', 'petdef'),
+        5: ('魔防', 'petspdef'),
+        6: ('速度', 'petspd'),
+    }
+    selected = getattr(pet_info, 'break_enhance_enum', None) or []
+    if not selected:
+        return []
+    try:
+        selected_set = {int(item) for item in selected}
+    except (TypeError, ValueError):
+        return []
+
+    parts = []
+    for attr_id, (label, attr_name) in attr_map.items():
+        attr_item = getattr(pet_info.attribute_info, attr_name, None)
+        talent = getattr(attr_item, 'talent', None)
+        if talent in [None, '']:
+            continue
+        try:
+            talent_num = int(talent)
+        except (TypeError, ValueError):
+            continue
+        if attr_id in selected_set:
+            parts.append(f'{label}+{talent_num}')
+    return parts[:3]
+
+def _draw_three_dimension_badges(draw, x, y, parts):
+    if not parts:
+        return 0
+    start_x = x
+    for part in parts:
+        badge_w = _draw_text_badge(
+            draw,
+            x,
+            y + 3,
+            part,
+            rc_font_18,
+            (86, 112, 207),
+            (215, 228, 255),
+            (86, 112, 207),
+            pad_x=10,
+            h=28,
+        )
+        x += badge_w + 6
+    return x - start_x
+
 def _get_metric_percent(pet_info, pet_base, metric):
     percent = getattr(pet_info, f'{metric}_percent', None)
     if percent not in [None, '']:
@@ -772,7 +823,9 @@ async def draw_pet_home_brief(uid, pet_data, home_name):
             _draw_text_badge(img_draw, badge_x, y0 + 60, f'特长：{speciality_name}', rc_font_22, (78, 83, 224), (220, 226, 255), (78, 83, 224), pad_x=12, h=34)
 
         voice_text = f'{getattr(pet_info, "voice", "--")}' if getattr(pet_info, 'voice', None) not in [None, ''] else '--'
-        _draw_metric(img, img_draw, 235, y0 + 105, TEXT_PATH / 'voice.png', '声音', voice_text, _get_metric_percent(pet_info, pet_base, 'voice'), (0, 137, 125), (203, 251, 240))
+        voice_w = _draw_metric(img, img_draw, 235, y0 + 105, TEXT_PATH / 'voice.png', '声音', voice_text, _get_metric_percent(pet_info, pet_base, 'voice'), (0, 137, 125), (203, 251, 240))
+        three_dimension_parts = _get_three_dimension_parts(pet_info)
+        _draw_three_dimension_badges(img_draw, 235 + voice_w + 16, y0 + 105, three_dimension_parts)
         height_w = _draw_metric(img, img_draw, 235, y0 + 145, TEXT_PATH / 'height.png', '身高', _format_height(getattr(pet_info, 'height', None)), _get_metric_percent(pet_info, pet_base, 'height'), (0, 121, 177), (214, 242, 255))
         weight_x = max(465, 235 + height_w + 16)
         _draw_metric(img, img_draw, weight_x, y0 + 145, TEXT_PATH / 'weight.png', '体重', _format_weight(getattr(pet_info, 'weight', None)), _get_metric_percent(pet_info, pet_base, 'weight'), (199, 96, 22), (255, 247, 220))

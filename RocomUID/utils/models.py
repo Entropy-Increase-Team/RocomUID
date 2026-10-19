@@ -161,6 +161,7 @@ class PetPanelInfo(Struct):
     speciality_id: Any = None
     real_speciality_ids: Any = None
     mutation_name: Any = None
+    break_enhance_enum: Any = None
 
 
 PetInfoMap = Dict[str, PetPanelInfo]
