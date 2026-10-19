@@ -7,6 +7,11 @@ from ..utils.rocom_api import wegame_api
 _CIRCLED_NUM = '①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳'
 
 
+def _mutation_tag(egg: Dict) -> str:
+    name = str(egg.get('mutation_name') or '').strip()
+    return f'（{name}）' if name and name != '普通' else ''
+
+
 def _format_voice(voice) -> str:
     if voice in [None, '']:
         return ''
@@ -28,7 +33,7 @@ def build_egg_line(index: int, egg: Dict) -> str:
     detail = _format_voice(father.get('voice'))
     if not detail:
         detail = _format_voice(mother.get('voice'))
-    return f'{mark} {mother_nature}{mother_name}：{detail}'
+    return f'{mark} {mother_nature}{mother_name}{_mutation_tag(egg)}：{detail}'
 
 
 async def api_to_home_egg_text(uid: str) -> str:
