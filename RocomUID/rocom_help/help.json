@@ -11,6 +11,22 @@
         "need_admin": false
       },
 	  {
+        "name": "我的uid",
+        "desc": "查看默认 UID 和全部家园 UID",
+        "eg": "我的uid",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+	  {
+        "name": "删除uid",
+        "desc": "删除已绑定的 UID（默认 UID 或家园 UID）",
+        "eg": "删除uid123456",
+        "need_ck": false,
+        "need_sk": false,
+        "need_admin": false
+      },
+	  {
         "name": "QQ登录",
         "desc": "QQ扫码登录",
         "eg": "QQ登录",
@@ -66,7 +82,7 @@
 	  {
         "name": "家园",
         "desc": "家园",
-        "eg": "家园[UID]",
+        "eg": "家园[UID]/2",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
@@ -74,7 +90,7 @@
 	  {
         "name": "菜园",
         "desc": "菜园",
-        "eg": "菜园[UID]",
+        "eg": "菜园[UID]/2",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
@@ -82,15 +98,15 @@
 	  {
         "name": "家园精灵",
         "desc": "家园精灵",
-        "eg": "家园精灵[UID]",
+        "eg": "家园精灵[UID]/2",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false
       },
 	  {
         "name": "生蛋了吗",
-        "desc": "进入家园场景，列出待收取的蛋",
-        "eg": "生蛋了吗[UID]",
+        "desc": "进入家园场景，列出待收取的蛋；不指定 UID/编号时查询全部已绑定 UID",
+        "eg": "生蛋了吗[UID]/2",
         "need_ck": false,
         "need_sk": true,
         "need_admin": false

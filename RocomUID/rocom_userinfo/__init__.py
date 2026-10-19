@@ -9,7 +9,7 @@ from gsuid_core.models import Event
 from ..utils.rocom_api import rocom_api,wegame_api,text_api
 from ..utils.error_reply import get_error
 from gsuid_core.logger import logger
-from ..utils.database.model import RocomUser
+from ..utils.database.model import RocomUser, HOME_UID_MAX_COUNT, UID_MIN_LENGTH
 from ..utils.message import send_diff_msg
 from ..utils.error_reply import prefix as P
 from ..utils.convert import get_rocom_name2id
@@ -18,6 +18,9 @@ from ..rocom_config.rocom_config import RC_CONFIG
 wegame_api_key: str = RC_CONFIG.get_config("RC_wegame_key").data
 
 sv_user_info = SV('rc用户信息查询', priority=5)
+
+HOME_SHORTCUT_START = 2
+HOME_SHORTCUT_END = HOME_SHORTCUT_START + HOME_UID_MAX_COUNT - 1
 
 @sv_user_info.on_command(('档案','洛克档案','uid','我的信息'))
 async def get_my_user_info_wegame(bot: Bot, ev: Event):
@@ -197,18 +200,77 @@ async def send_bind_card(bot: Bot, ev: Event):
 async def send_link_uid_msg(bot: Bot, ev: Event):
     qid = ev.user_id
     rc_uid = ev.text.strip()
-    if rc_uid and not rc_uid.isdigit():
-        return await bot.send("你输入了错误的格式!")
-    #print(rc_uid)
-    #print(ev.bot_self_id)
+    if rc_uid and (not rc_uid.isdigit() or len(rc_uid) < UID_MIN_LENGTH):
+        return await bot.send(f"请输入正确的UID格式，UID至少{UID_MIN_LENGTH}位数字!")
     data = await RocomUser.insert_rocom_uid(qid, ev.bot_self_id, rc_uid)
     await send_diff_msg(
         bot,
         data,
         {
             0: f"✅[洛克王国]绑定UID{rc_uid}成功!",
-            -1: f"❌RC_UID{rc_uid}的位数不正确!",
-            -2: f"❌RC_UID{rc_uid}已经绑定过了!",
-            -3: "❌你输入了错误的格式!",
+            1: f"✅UID{rc_uid}原本绑定在家园，已自动改为默认UID，原家园位已清空!",
+            -1: f"❌UID{rc_uid}的位数不正确!",
+            -2: f"❌UID{rc_uid}已经绑定过了!",
+            -3: f"❌家园UID数量已达上限（{HOME_UID_MAX_COUNT}个）!",
+        } | {
+            index: f"✅[洛克王国家园]绑定UID{rc_uid}成功，可使用 家园{index} 快速查询!"
+            for index in range(HOME_SHORTCUT_START, HOME_SHORTCUT_END + 1)
         },
     )
+
+
+@sv_user_info.on_command(("删除uid", "删除UID"))
+async def delete_link_uid_msg(bot: Bot, ev: Event):
+    rc_uid = ev.text.strip()
+    if rc_uid and (not rc_uid.isdigit() or len(rc_uid) < UID_MIN_LENGTH):
+        return await bot.send(f"请输入正确的UID格式，UID至少{UID_MIN_LENGTH}位数字!")
+    data = await RocomUser.delete_rocom_uid(ev.user_id, ev.bot_self_id, rc_uid)
+    await send_diff_msg(
+        bot,
+        data,
+        {
+            0: f"✅已删除默认UID{rc_uid}!",
+            -1: "❌请输入正确的UID格式!",
+            -3: f"❌未找到UID{rc_uid}!",
+        } | {
+            index: f"✅已删除家园{index}绑定的UID{rc_uid}!"
+            for index in range(HOME_SHORTCUT_START, HOME_SHORTCUT_END + 1)
+        },
+    )
+
+
+def get_uid_list_msg(bind_uid: str | None, home_uids: list[str | None]) -> str:
+    lines = ["🪪 我的 UID"]
+    if bind_uid:
+        lines.append(f"•  UID：{bind_uid}")
+    else:
+        lines.append("•  UID：未绑定")
+
+    valid_home_uids = [
+        (index, uid)
+        for index, uid in enumerate(home_uids[:HOME_UID_MAX_COUNT], HOME_SHORTCUT_START)
+        if uid
+    ]
+    lines.append("🏡 家园 UID")
+    if valid_home_uids:
+        for index, uid in valid_home_uids:
+            lines.append(f"•  UID{index}：{uid}")
+    else:
+        lines.append("•  暂未绑定")
+
+    lines.append("用法")
+    lines.append(
+        f"•  家园{HOME_SHORTCUT_START} ~ 家园{HOME_SHORTCUT_END}：按编号查询绑定的家园 UID"
+    )
+    lines.append(f"•  已绑定默认 UID 后，再次发送 {P}绑定uid<UID> 会自动绑定为新的家园 UID")
+    lines.append("•  同理部分其他命令你也可以这样快速查询绑定UID")
+    return "\n".join(lines)
+
+
+@sv_user_info.on_fullmatch(("我的uid", "我的UID"))
+async def send_my_uid_msg(bot: Bot, ev: Event):
+    bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
+    home_uids = await RocomUser.select_home_uids(ev.user_id, ev.bot_self_id)
+    if not bind_uid and not any(home_uids):
+        return await bot.send(f"你还没有绑定RC_UID哦!\n请发送：{P}绑定uid123456")
+    await bot.send(get_uid_list_msg(bind_uid, home_uids))

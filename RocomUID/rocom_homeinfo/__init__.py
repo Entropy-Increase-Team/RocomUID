@@ -1,5 +1,6 @@
 import json
 import time
+import asyncio
 from pathlib import Path
 from typing import Any
 
@@ -9,7 +10,8 @@ from gsuid_core.models import Event
 from gsuid_core.sv import SV
 
 from ..rocom_config.rocom_config import RC_CONFIG
-from ..utils.database.model import RocomUser
+from ..utils.database.model import RocomUser, HOME_UID_MAX_COUNT, UID_MIN_LENGTH
+from ..utils.error_reply import prefix as P
 from ..utils.models import HomeInfo
 from ..utils.resource.RESOURCE_PATH import PLAYER_PATH
 from ..utils.to_data import (
@@ -24,6 +26,9 @@ from .draw_home_image import draw_home_image
 from .draw_garden_image import draw_garden_image
 
 sv_home_info = SV('rc家园事件', priority=5)
+
+HOME_SHORTCUT_START = 2
+HOME_SHORTCUT_END = HOME_SHORTCUT_START + HOME_UID_MAX_COUNT - 1
 
 
 def is_config_enabled(config_key: str) -> bool:
@@ -98,20 +103,52 @@ async def get_my_pet_info_data(uid: str, include_skills: bool):
         include_skills=include_skills,
     )
 
+def get_bind_uid_prompt_msg() -> str:
+    return (
+        "你还没有绑定RC_UID哦!\n"
+        f"请发送：{P}绑定uid123456\n"
+    )
+
+
 async def _resolve_uid(bot: Bot, ev: Event, text=None):
-    """解析 UID：消息参数优先，否则取绑定。失败已回错误消息并返回 None。"""
+    """解析 UID：消息参数优先（支持 1 / 2..20 快捷编号），否则取默认绑定。"""
     args = (ev.text if text is None else text).split()
     if len(args) < 1:
         uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
         if not uid:
-            await bot.send('你还没有绑定RC_UID哦!')
+            await bot.send(get_bind_uid_prompt_msg())
             return None
-    else:
-        uid = args[0]
-    if uid and not uid.isdigit():
+        return str(uid)
+
+    uid = args[0].strip()
+    if uid.isdigit() and len(uid) >= UID_MIN_LENGTH:
+        return uid
+    if not uid.isdigit():
         await bot.send('请输入正确的UID格式!')
         return None
-    return uid
+
+    shortcut_number = int(uid)
+    if shortcut_number == 1:
+        bind_uid = await RocomUser.select_rocom_user(ev.user_id, ev.bot_self_id)
+        if not bind_uid:
+            await bot.send(get_bind_uid_prompt_msg())
+            return None
+        return str(bind_uid)
+    if shortcut_number < HOME_SHORTCUT_START or shortcut_number > HOME_SHORTCUT_END:
+        await bot.send(
+            f'快捷编号范围为 1 ~ {HOME_SHORTCUT_END}，其中 1 为默认绑定UID。'
+        )
+        return None
+
+    home_uids = await RocomUser.select_home_uids(ev.user_id, ev.bot_self_id)
+    index = shortcut_number - HOME_SHORTCUT_START
+    home_uid = home_uids[index] if index < len(home_uids) else None
+    if not home_uid:
+        await bot.send(
+            f'你还没有绑定家园{shortcut_number}对应的UID，请先发送：{P}绑定uid123456'
+        )
+        return None
+    return str(home_uid)
 
 
 def is_new_home_render_style() -> bool:
@@ -186,9 +223,29 @@ async def get_my_home_info_wegame(bot: Bot, ev: Event):
 
 @sv_home_info.on_command('生蛋了吗')
 async def get_my_home_egg_info(bot: Bot, ev: Event):
-    uid = await _resolve_uid(bot, ev)
-    if uid is None:
-        return
-    await bot.send(f'正在进入[UID]{uid}的家园查找待收取的蛋，请稍后')
-    result = await api_to_home_egg_text(uid)
-    return await bot.send(result, at_sender=True)
+    if ev.text.split():
+        uid = await _resolve_uid(bot, ev)
+        if uid is None:
+            return
+        await bot.send(f'正在进入[UID]{uid}的家园查找待收取的蛋，请稍后')
+        return await bot.send(await api_to_home_egg_text(uid), at_sender=True)
+
+    uids = await RocomUser.select_all_bound_uids(ev.user_id, ev.bot_self_id)
+    if not uids:
+        return await bot.send(get_bind_uid_prompt_msg())
+    if len(uids) == 1:
+        await bot.send(f'正在进入[UID]{uids[0]}的家园查找待收取的蛋，请稍后')
+        return await bot.send(await api_to_home_egg_text(uids[0]), at_sender=True)
+
+    await bot.send(f'正在查询{len(uids)}个账号的家园待收取的蛋，请稍后')
+    results = await asyncio.gather(
+        *(api_to_home_egg_text(uid) for uid in uids),
+        return_exceptions=True,
+    )
+    texts = []
+    for uid, result in zip(uids, results):
+        if isinstance(result, Exception):
+            texts.append(f'\nUID {uid} 查询失败：{result}')
+        else:
+            texts.append(result)
+    return await bot.send('\n'.join(texts), at_sender=True)
