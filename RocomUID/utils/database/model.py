@@ -9,6 +9,7 @@ from gsuid_core.utils.database.base_models import (
     with_session,
 )
 from gsuid_core.utils.database.startup import exec_list
+from gsuid_core.webconsole.mount_app import PageSchema, GsAdminModel, site
 
 T_RocomUser = TypeVar("T_RocomUser", bound="RocomUser")
 
@@ -273,3 +274,14 @@ class RocomUser(User, table=True):
         if stoken is None:
             stoken = 'qq'
         return token, stoken
+
+
+@site.register_admin
+class RocomUserAdmin(GsAdminModel):
+    pk_name = "id"
+    page_schema = PageSchema(
+        label="RocomUID 用户绑定",
+        icon="fa fa-user",
+    )  # type: ignore
+    model = RocomUser
+
